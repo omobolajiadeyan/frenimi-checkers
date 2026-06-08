@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f6e6cf"/>
+      <stop offset="1" stop-color="#e7c79f"/>
+    </linearGradient>
+    <linearGradient id="r" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f77b7b"/>
+      <stop offset="1" stop-color="#b42525"/>
+    </linearGradient>
+    <linearGradient id="b" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#666"/>
+      <stop offset="1" stop-color="#121212"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="176" height="176" rx="28" fill="url(#bg)" stroke="#2c1f1a" stroke-width="8"/>
+  <rect x="38" y="38" width="116" height="116" rx="10" fill="#5d3e31"/>
+  <circle cx="76" cy="76" r="23" fill="url(#r)" stroke="#7e1b1b" stroke-width="4"/>
+  <circle cx="118" cy="118" r="23" fill="url(#b)" stroke="#050505" stroke-width="4"/>
+  <text x="118" y="125" text-anchor="middle" font-family="Trebuchet MS, sans-serif" font-size="22" font-weight="700" fill="#f5f3ee">K</text>
+</svg>

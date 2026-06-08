@@ -1,0 +1,4836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#2c1f1a">
+  <title>FreNiMi Checkers</title>
+  <meta name="description" content="Secure checkers with local AI and realtime multiplayer.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    :root {
+      --sand: #f5ecd8;
+      --paper: #fffaf2;
+      --ink: #1f1d1a;
+      --ink-muted: #5f6c7e;
+      --surface-1: #ffffff;
+      --surface-2: #f5f8fb;
+      --surface-3: #edf2f7;
+      --stroke: #d5dde6;
+      --bg-spot-1: #fff4de;
+      --bg-spot-2: #f3d8b5;
+      --bg-grad-1: #f7efdf;
+      --bg-grad-2: #efe1ca;
+      --bg-grad-3: #e7d0b0;
+      --board-frame: #3a2117;
+      --board-rim-light: #6b3f2b;
+      --board-rim-dark: #20110c;
+      --board-dark: #4b2619;
+      --board-light: #cea46d;
+      --red: #c93939;
+      --red-edge: #7e1b1b;
+      --black: #202020;
+      --black-edge: #080808;
+      --accent: #0f5f56;
+      --accent-2: #136b9e;
+      --shadow: rgba(28, 41, 59, 0.16);
+    }
+
+    body[data-theme="midnight"] {
+      --paper: #161f2e;
+      --ink: #e5edf7;
+      --bg-spot-1: #12263f;
+      --bg-spot-2: #1b3e56;
+      --bg-grad-1: #0c1320;
+      --bg-grad-2: #14243a;
+      --bg-grad-3: #1b3854;
+      --board-frame: #0b121d;
+      --board-rim-light: #2f4f66;
+      --board-rim-dark: #080d14;
+      --board-dark: #244157;
+      --board-light: #8ca8bd;
+      --accent: #2f9ec0;
+      --shadow: rgba(7, 10, 16, 0.5);
+    }
+
+    body[data-theme="emerald"] {
+      --paper: #f2fff9;
+      --ink: #153025;
+      --bg-spot-1: #d5ffe8;
+      --bg-spot-2: #9de8ca;
+      --bg-grad-1: #d6f5e8;
+      --bg-grad-2: #b7ead5;
+      --bg-grad-3: #9fd9c1;
+      --board-frame: #173d2b;
+      --board-rim-light: #366e54;
+      --board-rim-dark: #10251b;
+      --board-dark: #2b6b4c;
+      --board-light: #bde0c9;
+      --accent: #137b53;
+      --shadow: rgba(13, 38, 28, 0.26);
+    }
+
+    body[data-theme="sunset"] {
+      --paper: #fff7f0;
+      --ink: #3a2115;
+      --bg-spot-1: #ffe8d4;
+      --bg-spot-2: #ffba99;
+      --bg-grad-1: #f8ddcf;
+      --bg-grad-2: #f2c6ad;
+      --bg-grad-3: #df9d7a;
+      --board-frame: #4a261a;
+      --board-rim-light: #8f5a44;
+      --board-rim-dark: #24130d;
+      --board-dark: #8f4d35;
+      --board-light: #e0c29e;
+      --accent: #b85a1b;
+      --shadow: rgba(58, 28, 18, 0.29);
+    }
+
+    body[data-variant="nigeria"] {
+      --board-frame: #2e3f18;
+      --board-rim-light: #5d7a2e;
+      --board-rim-dark: #18210d;
+      --board-dark: #4d6a24;
+      --board-light: #d7e4b5;
+    }
+
+    body[data-variant="african"] {
+      --board-frame: #4f2f1f;
+      --board-rim-light: #8c5e3b;
+      --board-rim-dark: #24140d;
+      --board-dark: #805437;
+      --board-light: #e4c89f;
+    }
+
+    body[data-variant="usa"] {
+      --board-frame: #112843;
+      --board-rim-light: #3d628f;
+      --board-rim-dark: #0a1627;
+      --board-dark: #244772;
+      --board-light: #c7d9f0;
+    }
+
+    body[data-variant="english"] {
+      --board-frame: #3b2d26;
+      --board-rim-light: #6e5548;
+      --board-rim-dark: #1f1713;
+      --board-dark: #6a4e3f;
+      --board-light: #e2ccb2;
+    }
+
+    body[data-variant="russia"] {
+      --board-frame: #12253c;
+      --board-rim-light: #365d8b;
+      --board-rim-dark: #0a1422;
+      --board-dark: #27496e;
+      --board-light: #ccdff7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Aptos", "Bahnschrift", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, #f7fbff 0%, transparent 34%),
+        radial-gradient(circle at 92% 84%, #eaf3fb 0%, transparent 38%),
+        linear-gradient(145deg, #f4f7fb, #ecf2f8 45%, #e6edf5);
+      padding:
+        calc(0.55rem + env(safe-area-inset-top))
+        calc(0.55rem + env(safe-area-inset-right))
+        calc(0.55rem + env(safe-area-inset-bottom))
+        calc(0.55rem + env(safe-area-inset-left));
+      display: grid;
+      place-items: center;
+      overflow-x: hidden;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      max-width: 100%;
+      background: var(--surface-1);
+      border: 1px solid var(--stroke);
+      border-radius: 14px;
+      box-shadow:
+        0 14px 30px var(--shadow),
+        0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      overflow: hidden;
+      animation: app-enter 420ms ease-out both;
+    }
+
+    .hero {
+      padding: 0.7rem 0.8rem;
+      background: linear-gradient(112deg, #ffffff, #f4f8fc 46%, #edf3f9);
+      border-bottom: 1px solid var(--stroke);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.25rem, 2.5vw, 1.8rem);
+      letter-spacing: 0.4px;
+    }
+
+    .subtitle {
+      margin: 0.15rem 0 0;
+      color: var(--ink-muted);
+      font-size: 0.84rem;
+    }
+
+    .variant-badge {
+      margin: 0.34rem 0 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.18rem 0.52rem;
+      border-radius: 999px;
+      border: 1px solid var(--stroke);
+      background: var(--surface-2);
+      color: #2f3b49;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .hero-wallet {
+      margin-left: auto;
+      border: 1px solid #b8cedf;
+      border-radius: 999px;
+      background: linear-gradient(165deg, #eaf4ff, #dcecf9);
+      color: #123a56;
+      font-size: 0.82rem;
+      font-weight: 800;
+      padding: 0.24rem 0.56rem;
+      white-space: nowrap;
+      align-self: center;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 338px) minmax(0, 640px);
+      justify-content: center;
+      align-items: start;
+      gap: 0.42rem;
+      padding: 0.42rem;
+    }
+
+    .panel {
+      border: 1px solid var(--stroke);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fbfdff, #f5f8fb);
+      padding: 0.42rem;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 2px 5px rgba(30, 50, 70, 0.06);
+      display: grid;
+      gap: 0.3rem;
+      align-content: start;
+      min-width: 0;
+      animation: panel-enter 420ms ease-out both;
+    }
+
+    .enterprise-stack {
+      display: grid;
+      gap: 0.26rem;
+    }
+
+    .enterprise-block {
+      border: 1px solid #cfdae5;
+      border-radius: 10px;
+      background: #ffffff;
+      padding: 0.34rem;
+      display: grid;
+      gap: 0.2rem;
+      box-shadow: 0 1px 2px rgba(24, 45, 72, 0.06);
+    }
+
+    .enterprise-title {
+      margin: 0;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #4a6078;
+      font-weight: 800;
+    }
+
+    .group-title {
+      margin: 0;
+      font-size: 0.74rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #4e5f73;
+      font-weight: 700;
+    }
+
+    .controls {
+      display: grid;
+      gap: 0.18rem;
+    }
+
+    .row {
+      display: grid;
+      gap: 0.1rem;
+    }
+
+    .variant-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.42rem;
+    }
+
+    .variant-btn {
+      min-height: 58px;
+      border-radius: 10px;
+      border: 1px solid #bfd0df;
+      background: linear-gradient(165deg, #ffffff, #f0f5fa);
+      color: #314154;
+      display: grid;
+      place-items: center;
+      gap: 0.12rem;
+      padding: 0.36rem 0.2rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      line-height: 1.1;
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+    }
+
+    .variant-btn .flag {
+      font-size: 0.6rem;
+      line-height: 1;
+      letter-spacing: 0.1em;
+      font-weight: 900;
+      border: 1px solid #cad8e4;
+      background: #ebf3fa;
+      color: #35526b;
+      border-radius: 999px;
+      padding: 0.14rem 0.3rem;
+      min-width: 2rem;
+      text-align: center;
+    }
+
+    .variant-btn.active {
+      border-color: #5fa4d4;
+      background: linear-gradient(165deg, #dff0ff, #b8dcf8);
+      color: #0f4f7a;
+      box-shadow: 0 4px 10px rgba(39, 112, 168, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .variant-btn.active .flag {
+      border-color: #5a94bf;
+      background: rgba(255, 255, 255, 0.72);
+      color: #14537f;
+    }
+
+    .variant-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .variant-note {
+      margin: 0;
+      font-size: 0.75rem;
+      color: #5a6a7a;
+      line-height: 1.3;
+      padding: 0.32rem 0.42rem;
+      border-radius: 8px;
+      border: 1px dashed #c7d4e0;
+      background: #f7fbff;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: #4e4031;
+      font-weight: 700;
+    }
+
+    input,
+    select,
+    button {
+      border-radius: 8px;
+      border: 1px solid #bfccd8;
+      font-size: 0.9rem;
+      padding: 0.34rem 0.62rem;
+      font-family: inherit;
+      min-height: 38px;
+      touch-action: manipulation;
+    }
+
+    input {
+      background: #ffffff;
+      color: #1f2f3f;
+    }
+
+    select {
+      background: #ffffff;
+      color: #1f2f3f;
+    }
+
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      border-color: #0b5a52;
+      font-weight: 700;
+    }
+
+    button.secondary {
+      background: #f2f6fa;
+      color: #304153;
+      border-color: #c4d1dc;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.18rem;
+    }
+
+    .button-row.single {
+      grid-template-columns: 1fr;
+    }
+
+    .status {
+      margin: 0;
+      padding: 0.44rem 0.56rem;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #f8fbff, #eef4fa);
+      border: 1px solid #c7d5e1;
+      font-size: 0.86rem;
+      min-height: 44px;
+    }
+
+    .play-note {
+      margin: 0.2rem 0 0;
+      min-height: 1.2rem;
+      font-size: 0.84rem;
+      color: #8b2a1d;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+
+    .counts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.18rem;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.18rem;
+    }
+
+    .chip {
+      border: 1px solid #c4d1dc;
+      border-radius: 999px;
+      padding: 0.28rem 0.48rem;
+      text-align: center;
+      background: #ffffff;
+      font-size: 0.82rem;
+    }
+
+    .chip strong {
+      font-size: 0.95rem;
+    }
+
+    .history-wrap {
+      display: grid;
+      gap: 0.16rem;
+    }
+
+    .history {
+      margin: 0;
+      padding: 0.34rem 0.52rem;
+      list-style: none;
+      max-height: 200px;
+      overflow: auto;
+      border-radius: 8px;
+      border: 1px solid #d3dde6;
+      background: #ffffff;
+      font-size: 0.82rem;
+    }
+
+    .history li {
+      padding: 0.1rem 0;
+      border-bottom: 1px dashed #ead9c4;
+    }
+
+    .history li:last-child {
+      border-bottom: 0;
+    }
+
+    .history.ladder {
+      max-height: 190px;
+      font-size: 0.84rem;
+    }
+
+    .board-area {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-width: 0;
+      width: min(100%, 640px);
+      overflow: visible;
+    }
+
+    .board-shell {
+      width: min(100%, 640px);
+      max-width: 640px;
+      display: grid;
+      gap: 0.24rem;
+      justify-items: stretch;
+      margin-inline: auto;
+      padding: 0.48rem 0.48rem 0.38rem;
+      border-radius: 14px;
+      border: 1px solid rgba(69, 51, 39, 0.34);
+      background:
+        radial-gradient(circle at 20% 16%, rgba(255, 255, 255, 0.5), transparent 52%),
+        linear-gradient(165deg, rgba(255, 255, 255, 0.72), rgba(241, 227, 205, 0.9));
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.72),
+        0 6px 14px rgba(0, 0, 0, 0.12);
+      position: relative;
+    }
+
+    .board-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 14px;
+      pointer-events: none;
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.24), transparent 36%, rgba(0, 0, 0, 0.12));
+      opacity: 0.55;
+    }
+
+    .clock-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.24rem;
+    }
+
+    .clock-chip {
+      border: 1px solid #c39b6e;
+      border-radius: 10px;
+      padding: 0.28rem 0.4rem;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.02em;
+      background: #fff7eb;
+    }
+
+    .clock-chip.red {
+      color: #7e1b1b;
+    }
+
+    .clock-chip.black {
+      color: #151515;
+    }
+
+    .clock-chip.active {
+      border-color: #0f5e56;
+      box-shadow: 0 0 0 2px rgba(18, 111, 101, 0.2);
+    }
+
+    .clock-chip.out {
+      background: #f8d7d7;
+      border-color: #b93a3a;
+      color: #741d1d;
+    }
+
+    .clock-chip.waiting {
+      opacity: 0.78;
+    }
+
+    .clock-chip.warning {
+      border-color: #d17e1f;
+      box-shadow: 0 0 0 2px rgba(209, 126, 31, 0.18);
+    }
+
+    .clock-chip.critical {
+      border-color: #c53a3a;
+      background: #ffe3e3;
+      animation: clock-flash 0.7s steps(2, jump-none) infinite;
+    }
+
+    .file-labels {
+      width: 100%;
+      max-width: none;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 0;
+      padding: 0 2px;
+      color: #594a3b;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .board {
+      width: 100%;
+      max-width: 640px;
+      aspect-ratio: 1;
+      border: 9px solid transparent;
+      border-radius: 14px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      position: relative;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+        0 18px 30px rgba(0, 0, 0, 0.28);
+      background:
+        linear-gradient(
+          142deg,
+          var(--board-rim-light) 0%,
+          var(--board-frame) 42%,
+          var(--board-rim-dark) 100%
+        ) border-box;
+    }
+
+    .board::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.11), transparent 42%),
+        radial-gradient(circle at 80% 84%, rgba(0, 0, 0, 0.12), transparent 45%);
+      z-index: 1;
+    }
+
+    .board::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.28);
+      z-index: 1;
+    }
+
+    .square {
+      position: relative;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      transition: box-shadow 160ms ease, transform 140ms ease;
+      z-index: 0;
+    }
+
+    .square.dark {
+      background:
+        linear-gradient(150deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.22)),
+        var(--board-dark);
+    }
+
+    .square.light {
+      background:
+        linear-gradient(150deg, rgba(255, 255, 255, 0.22), rgba(0, 0, 0, 0.08)),
+        var(--board-light);
+    }
+
+    .square::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      mix-blend-mode: soft-light;
+      opacity: 0.35;
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0.22) 0 2px,
+          rgba(0, 0, 0, 0.08) 2px 5px,
+          rgba(255, 255, 255, 0.12) 5px 8px
+        );
+    }
+
+    .square.dark::before {
+      opacity: 0.24;
+    }
+
+    .square.selectable::after {
+      content: "";
+      position: absolute;
+      inset: 10%;
+      border: 2px solid rgba(255, 255, 255, 0.67);
+      border-radius: 8px;
+      pointer-events: none;
+      animation: square-pulse 1.4s ease-in-out infinite;
+    }
+
+    .square.selected::after {
+      content: "";
+      position: absolute;
+      inset: 7%;
+      border: 3px solid #ffd166;
+      border-radius: 8px;
+      pointer-events: none;
+    }
+
+    .square.target::before {
+      content: "";
+      position: absolute;
+      width: 24%;
+      height: 24%;
+      border-radius: 999px;
+      background: rgba(255, 209, 102, 0.95);
+      box-shadow: 0 0 0 2px rgba(52, 36, 25, 0.4);
+      pointer-events: none;
+    }
+
+    .square.last-from {
+      box-shadow: inset 0 0 0 3px rgba(103, 221, 192, 0.62);
+    }
+
+    .square.last-to {
+      box-shadow: inset 0 0 0 3px rgba(255, 230, 146, 0.76);
+    }
+
+    .square.hint-from {
+      box-shadow: inset 0 0 0 3px rgba(56, 170, 246, 0.68);
+    }
+
+    .square.hint-to::after {
+      content: "";
+      position: absolute;
+      inset: 19%;
+      border-radius: 999px;
+      border: 3px solid rgba(56, 170, 246, 0.9);
+      pointer-events: none;
+    }
+
+    .piece {
+      width: 76%;
+      height: 76%;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      color: #f6f3ee;
+      font-size: clamp(0.9rem, 2.2vw, 1.15rem);
+      font-weight: 800;
+      text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+      transform: scale(1);
+      transition: transform 0.12s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        inset 0 -12px 14px rgba(0, 0, 0, 0.34),
+        inset 0 1px 2px rgba(255, 255, 255, 0.24),
+        0 7px 10px rgba(0, 0, 0, 0.36);
+    }
+
+    .piece::before {
+      content: "";
+      position: absolute;
+      left: 18%;
+      right: 18%;
+      top: 10%;
+      height: 30%;
+      border-radius: 999px;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
+
+    .square:hover .piece {
+      transform: scale(1.04);
+    }
+
+    .piece.red {
+      background:
+        radial-gradient(circle at 30% 24%, #ff9f96, #d24135 49%, #8b201b 80%, #5b130f 100%);
+      border: 2px solid #6a1a1a;
+    }
+
+    .piece.black {
+      background:
+        radial-gradient(circle at 30% 24%, #6f6f6f, #2f2f2f 48%, #171717 78%, #080808 100%);
+      border: 2px solid #040404;
+    }
+
+    .piece.king::after {
+      content: "♛";
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      font-size: 0.92em;
+      line-height: 1;
+      color: #f3d768;
+      text-shadow:
+        0 1px 0 rgba(71, 52, 8, 0.8),
+        0 0 3px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(0, 0, 0, 0.45);
+      z-index: 50;
+      padding: 1rem;
+    }
+
+    .modal.hidden {
+      display: none;
+    }
+
+    .modal-card {
+      width: min(460px, 100%);
+      border-radius: 14px;
+      border: 1px solid #d5b184;
+      background: #fffaf2;
+      padding: 1rem;
+      box-shadow: 0 18px 34px rgba(0, 0, 0, 0.28);
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .modal-text {
+      margin: 0;
+      color: #46382c;
+      font-size: 0.96rem;
+    }
+
+    .footer-note {
+      margin: 0;
+      text-align: center;
+      padding: 0 1rem 1rem;
+      color: #758596;
+      font-size: 0.74rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .store-note {
+      margin: 0;
+      padding: 0.38rem 0.52rem;
+      border-radius: 8px;
+      border: 1px solid #cedbe6;
+      background: #f6fbff;
+      color: #5f7285;
+      font-size: 0.76rem;
+    }
+
+    .compact-group {
+      border: 1px solid #d1dce6;
+      border-radius: 8px;
+      padding: 0.1rem 0.34rem 0.26rem;
+      background: #f9fcff;
+    }
+
+    .compact-group summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 0.74rem;
+      font-weight: 800;
+      color: #4d6072;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.1rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .compact-group summary::after {
+      content: "+";
+      color: #5f7892;
+      font-size: 0.95rem;
+      line-height: 1;
+      transform: translateY(-1px);
+    }
+
+    .compact-group[open] summary::after {
+      content: "-";
+    }
+
+    .compact-group summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .compact-group[open] summary {
+      margin-bottom: 0.18rem;
+    }
+
+    @keyframes app-enter {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.995);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes panel-enter {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes square-pulse {
+      0%,
+      100% {
+        opacity: 0.72;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes clock-flash {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.45;
+      }
+    }
+
+    @media (max-width: 980px) {
+      body {
+        padding:
+          calc(0.45rem + env(safe-area-inset-top))
+          calc(0.45rem + env(safe-area-inset-right))
+          calc(0.65rem + env(safe-area-inset-bottom))
+          calc(0.45rem + env(safe-area-inset-left));
+      }
+
+      .app {
+        width: 100%;
+        border-radius: 14px;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        padding: 0.3rem;
+        gap: 0.28rem;
+      }
+
+      .panel {
+        order: 2;
+        padding: 0.34rem;
+      }
+
+      .board-area {
+        order: 1;
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .hero {
+        padding: 0.75rem 0.8rem;
+      }
+
+      .title {
+        font-size: 1.2rem;
+      }
+
+      .subtitle {
+        font-size: 0.84rem;
+      }
+
+      .hero-wallet {
+        margin-left: 0;
+        justify-self: start;
+      }
+
+      .board {
+        width: 100%;
+        max-width: none;
+        border-width: 6px;
+      }
+
+      .board-shell {
+        width: 100%;
+        padding: 0.22rem 0.22rem 0.16rem;
+      }
+
+      .file-labels {
+        font-size: 0.68rem;
+      }
+
+      .variant-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .history {
+        max-height: 180px;
+      }
+
+      .button-row {
+        grid-template-columns: 1fr;
+      }
+
+      .counts,
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 520px) {
+      body {
+        padding:
+          calc(0.3rem + env(safe-area-inset-top))
+          calc(0.3rem + env(safe-area-inset-right))
+          calc(0.55rem + env(safe-area-inset-bottom))
+          calc(0.3rem + env(safe-area-inset-left));
+      }
+
+      .app {
+        border-radius: 10px;
+        border-width: 1px;
+        width: 100%;
+      }
+
+      .layout {
+        padding: 0.18rem;
+      }
+
+      .board {
+        width: 100%;
+        max-width: none;
+        border-width: 5px;
+      }
+
+      .board-shell {
+        width: 100%;
+        padding: 0.18rem 0.18rem 0.14rem;
+      }
+
+      #topFiles {
+        display: none;
+      }
+
+      .square.selectable::after {
+        inset: 12%;
+      }
+
+      .square.selected::after {
+        inset: 9%;
+      }
+
+      .piece {
+        width: 78%;
+        height: 78%;
+      }
+
+      .status {
+        min-height: 0;
+      }
+
+      .variant-btn {
+        min-height: 52px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <div>
+        <h1 class="title">FreNiMi Checkers</h1>
+        <p class="subtitle">Quick games. Smart AI. Clean board.</p>
+        <p id="variantBadge" class="variant-badge">English Variant</p>
+      </div>
+      <div id="walletTop" class="hero-wallet">Wallet: 0 coins</div>
+    </header>
+
+    <section class="layout">
+            <aside class="panel">
+        <div class="enterprise-stack">
+          <section class="enterprise-block">
+            <p class="enterprise-title">Play</p>
+            <div class="controls">
+              <div class="row">
+                <label id="redNameLabel" for="redNameInput">Your Name (Red)</label>
+                <input id="redNameInput" type="text" maxlength="32" placeholder="Red Player">
+              </div>
+
+              <div class="row">
+                <label id="blackNameLabel" for="blackNameInput">Opponent Name (Black)</label>
+                <input id="blackNameInput" type="text" maxlength="32" placeholder="Black Player">
+              </div>
+
+              <div class="row">
+                <label for="variantPicker">Country Variant</label>
+                <div id="variantPicker" class="variant-grid" aria-label="Checkers variant">
+                  <button type="button" class="variant-btn" data-variant="nigeria"><span class="flag">NG</span><span>Nigeria</span></button>
+                  <button type="button" class="variant-btn" data-variant="african"><span class="flag">AF</span><span>African</span></button>
+                  <button type="button" class="variant-btn" data-variant="usa"><span class="flag">US</span><span>USA</span></button>
+                  <button type="button" class="variant-btn active" data-variant="english"><span class="flag">EN</span><span>English</span></button>
+                  <button type="button" class="variant-btn" data-variant="russia"><span class="flag">RU</span><span>Russia</span></button>
+                </div>
+                <p id="variantNote" class="variant-note">Classic tournament style.</p>
+              </div>
+
+              <div class="row">
+                <label for="modeSelect">Mode</label>
+                <select id="modeSelect">
+                  <option value="pvp">2 Players</option>
+                  <option value="ai">Vs Computer</option>
+                  <option value="online">Online Ranked</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="enterprise-block">
+            <p class="enterprise-title">Match</p>
+            <div class="button-row">
+              <button id="newGameBtn" type="button">New Game</button>
+              <button id="undoBtn" type="button" class="secondary">Undo</button>
+            </div>
+
+            <div class="button-row">
+              <button id="hintBtn" type="button" class="secondary">Hint (2)</button>
+              <button id="quickMatchBtn" type="button">Quick</button>
+            </div>
+
+            <details class="compact-group">
+              <summary>More Controls</summary>
+              <div class="row ai-only" id="sideRow">
+                <label for="sideSelect">Side</label>
+                <select id="sideSelect">
+                  <option value="red" selected>Red (First)</option>
+                  <option value="black">Black (Second)</option>
+                </select>
+              </div>
+
+              <div class="row ai-only" id="levelRow">
+                <label for="depthSelect">Level</label>
+                <select id="depthSelect">
+                  <option value="easy">Easy</option>
+                  <option value="soft" selected>Soft</option>
+                  <option value="hard">Hard</option>
+                  <option value="expert">Expert</option>
+                </select>
+              </div>
+
+              <div class="row ai-only" id="speedRow">
+                <label for="speedSelect">AI Speed</label>
+                <select id="speedSelect">
+                  <option value="verySlow" selected>Very Slow</option>
+                  <option value="slow">Slow</option>
+                  <option value="normal">Normal</option>
+                </select>
+              </div>
+
+              <div class="row" id="paceRow">
+                <label for="paceSelect">Clock</label>
+                <select id="paceSelect">
+                  <option value="classic">No Clock</option>
+                  <option value="rapid120" selected>Rapid (2m)</option>
+                  <option value="standard300">Standard (5m)</option>
+                </select>
+              </div>
+
+              <div class="row" id="captureRuleRow">
+                <label for="captureRuleSelect">Captures</label>
+                <select id="captureRuleSelect">
+                  <option value="forced" selected>Forced</option>
+                  <option value="casual">Optional</option>
+                </select>
+              </div>
+
+              <div class="row" id="illegalMoveRow">
+                <label for="illegalMoveSelect">Illegal Move</label>
+                <select id="illegalMoveSelect">
+                  <option value="strict">Block</option>
+                  <option value="penalty" selected>Lose Turn</option>
+                </select>
+              </div>
+
+              <div class="button-row">
+                <button id="flipBtn" type="button" class="secondary">Flip</button>
+                <button id="clearHistoryBtn" type="button" class="secondary">Clear</button>
+              </div>
+
+              <div class="button-row single">
+                <button id="installBtn" type="button" class="secondary" hidden>Install App</button>
+              </div>
+            </details>
+
+            <div id="onlinePanel" class="controls">
+              <p class="group-title">Online Ranked</p>
+              <div class="row">
+                <label for="onlineNameInput">Online Name</label>
+                <input id="onlineNameInput" type="text" maxlength="32" placeholder="Your online handle">
+              </div>
+              <div class="row">
+                <label for="onlineApiInput">API URL</label>
+                <input id="onlineApiInput" type="text" maxlength="120" placeholder="http://127.0.0.1:4000/api/checkers">
+              </div>
+              <div class="button-row">
+                <button id="onlineConnectBtn" type="button" class="secondary">Connect</button>
+                <button id="onlineQueueBtn" type="button">Find Match</button>
+              </div>
+              <div class="button-row">
+                <button id="onlineCancelQueueBtn" type="button" class="secondary">Cancel</button>
+                <button id="onlineSurrenderBtn" type="button" class="secondary">Resign</button>
+              </div>
+              <p id="onlineStatus" class="store-note">Online mode idle.</p>
+              <div class="history-wrap">
+                <p class="group-title">Ladder</p>
+                <ul id="ladderList" class="history ladder"></ul>
+              </div>
+            </div>
+
+            <div class="row">
+              <p class="group-title">Status</p>
+              <p id="status" class="status">Loading game...</p>
+              <p id="playNote" class="play-note"></p>
+            </div>
+          </section>
+
+          <section class="enterprise-block">
+            <p class="enterprise-title">Economy</p>
+            <div class="row">
+              <p class="group-title">Wallet & Score</p>
+              <div class="counts">
+                <div class="chip" id="redScore">Red (0)</div>
+                <div class="chip" id="blackScore">Black (0)</div>
+                <div class="chip" id="coinWallet">Coins: 0</div>
+              </div>
+            </div>
+
+            <details class="compact-group">
+              <summary>Stats & Data</summary>
+              <div class="stat-grid">
+                <div class="chip" id="totalGamesStat">Total Games: 0</div>
+                <div class="chip" id="drawsStat">Draws: 0</div>
+                <div class="chip" id="redWinsStat">Red Wins: 0</div>
+                <div class="chip" id="blackWinsStat">Black Wins: 0</div>
+                <div class="chip" id="aiGamesStat">AI Games: 0</div>
+                <div class="chip" id="pvpGamesStat">PvP Games: 0</div>
+                <div class="chip" id="aiRatingStat">AI Rating: 1200</div>
+                <div class="chip" id="bestStreakStat">Best Win Streak: 0</div>
+              </div>
+              <div class="button-row" style="margin-top:0.16rem;">
+                <button id="exportDataBtn" type="button" class="secondary">Export</button>
+                <button id="importDataBtn" type="button" class="secondary">Import</button>
+              </div>
+              <div class="button-row single" style="margin-top:0.16rem;">
+                <button id="resetScoreBtn" type="button" class="secondary">Reset Score</button>
+              </div>
+              <div class="button-row single" style="margin-top:0.16rem;">
+                <button id="clearAllDataBtn" type="button" class="secondary">Clear All</button>
+              </div>
+              <input id="importDataInput" type="file" accept=".json,application/json" hidden>
+            </details>
+
+            <details class="compact-group">
+              <summary>Shop</summary>
+              <div class="button-row">
+                <button id="buyRemoveAdsBtn" type="button">Remove Ads</button>
+                <button id="buyProPassBtn" type="button">Pro Pass</button>
+              </div>
+              <div class="button-row">
+                <button id="buyOfflineUpgradeBtn" type="button">Offline Premium</button>
+                <button id="restorePurchasesBtn" type="button" class="secondary">Restore</button>
+              </div>
+              <div class="button-row">
+                <button id="buyHintPackBtn" type="button" class="secondary">Hint +10</button>
+                <button id="buyUndoPackBtn" type="button" class="secondary">Undo +5</button>
+              </div>
+              <div class="button-row">
+                <button id="watchRewardBtn" type="button" class="secondary">Watch Ad</button>
+                <select id="themeSelect">
+                  <option value="classic">Classic (Free)</option>
+                  <option value="midnight">Midnight (Premium)</option>
+                  <option value="emerald">Emerald (Premium)</option>
+                  <option value="sunset">Sunset (Premium)</option>
+                </select>
+              </div>
+              <p id="storeStatus" class="store-note">Store not initialized yet.</p>
+            </details>
+
+            <details class="compact-group">
+              <summary>Pieces</summary>
+              <div class="counts">
+                <div class="chip" id="redCount"><strong>Red</strong></div>
+                <div class="chip" id="blackCount"><strong>Black</strong></div>
+              </div>
+            </details>
+
+            <details class="compact-group">
+              <summary>Move Log</summary>
+              <div class="history-wrap">
+                <ul id="historyList" class="history"></ul>
+              </div>
+            </details>
+          </section>
+        </div>
+      </aside>
+
+      <div class="board-area">
+        <div class="board-shell">
+          <div id="clockGrid" class="clock-grid" hidden>
+            <div id="redClock" class="clock-chip red">Red 02:00</div>
+            <div id="blackClock" class="clock-chip black">Black 02:00</div>
+          </div>
+          <div id="topFiles" class="file-labels" aria-hidden="true"></div>
+          <div id="board" class="board" aria-label="Checkers board"></div>
+          <div id="bottomFiles" class="file-labels" aria-hidden="true"></div>
+        </div>
+      </div>
+    </section>
+    <p class="footer-note">Copyright &copy; 2026 FreNiMi. Built for secure, fair play.</p>
+  </main>
+
+  <div id="gameOverModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="gameOverTitle">
+      <h2 id="gameOverTitle" class="modal-title">Game Over</h2>
+      <p id="gameOverText" class="modal-text"></p>
+      <p id="gameOverRewardText" class="modal-text" hidden></p>
+      <div class="button-row">
+        <button id="doubleCoinsBtn" type="button" class="secondary" hidden>Watch Ad: 2x Reward</button>
+        <button id="playAgainBtn" type="button">Play Again</button>
+        <button id="closeModalBtn" type="button" class="secondary">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/js/checkers-core.js"></script>
+  <script>
+    const SIZE = 8;
+    const RED = "r";
+    const BLACK = "b";
+    const FILES = "abcdefgh";
+    const STORAGE_KEY = "checkers_pro_profile_v2";
+    const LEGACY_STORAGE_KEY = "checkers_pro_profile_v1";
+    const DRAW_NON_PROGRESS_LIMIT = 80;
+    const ARCHIVE_LIMIT = 200;
+    const AUDIT_LIMIT = 800;
+    const FREE_HINTS_PER_GAME = 2;
+    const FREE_UNDOS_PER_GAME = 3;
+    const REWARDED_HINT_CREDIT = 1;
+    const ADS_CHANNEL_PLACEHOLDER = "__CHECKERS_ADS_CHANNEL__";
+    const REWARDED_EVENT_NAME = "onRewardedVideoAdReward";
+    const REWARDED_DISMISSED_EVENT_NAME = "onRewardedVideoAdDismissed";
+    const REWARDED_FAILED_EVENT_NAME = "onRewardedVideoAdFailedToShow";
+    const HINT_PACK_CREDITS = 10;
+    const UNDO_PACK_CREDITS = 5;
+    const MATCH_COIN_PAYOUT = {
+      pvpWin: 25,
+      aiWin: 30,
+      aiLoss: 20,
+      draw: 20
+    };
+    const MONETIZATION = {
+      revenueCat: {
+        entitlementRemoveAds: "remove_ads",
+        entitlementProPass: "pro_pass",
+        entitlementOfflinePremium: "offline_premium",
+        androidApiKey: "REVENUECAT_ANDROID_API_KEY",
+        iosApiKey: "REVENUECAT_IOS_API_KEY",
+        productRemoveAdsAndroid: "remove_ads",
+        productRemoveAdsIOS: "remove_ads",
+        productProPassAndroid: "pro_pass_monthly",
+        productProPassIOS: "pro_pass_monthly",
+        productOfflinePremiumAndroid: "offline_premium",
+        productOfflinePremiumIOS: "offline_premium",
+        productHintPackAndroid: "hint_pack_10",
+        productHintPackIOS: "hint_pack_10",
+        productUndoPackAndroid: "undo_pack_5",
+        productUndoPackIOS: "undo_pack_5"
+      },
+      admob: {
+        android: {
+          interstitial: "ca-app-pub-3940256099942544/1033173712",
+          rewarded: "ca-app-pub-9976499999823771/2489188967"
+        },
+        ios: {
+          interstitial: "ca-app-pub-3940256099942544/4411468910",
+          rewarded: "ca-app-pub-9976499999823771/6367414717"
+        }
+      }
+    };
+    const ONLINE_POLL_MS = 2500;
+
+    const PIECE_WEIGHT = {
+      man: 100,
+      king: 175
+    };
+
+    const AI_LEVELS = {
+      easy: {
+        depth: 2,
+        thinkMs: 2800,
+        stepMs: 1450,
+        mistakeChance: 0.45,
+        topPool: 4
+      },
+      soft: {
+        depth: 4,
+        thinkMs: 2400,
+        stepMs: 1300,
+        mistakeChance: 0.18,
+        topPool: 3
+      },
+      hard: {
+        depth: 6,
+        thinkMs: 2100,
+        stepMs: 1150,
+        mistakeChance: 0.0,
+        topPool: 1
+      },
+      expert: {
+        depth: 7,
+        thinkMs: 2400,
+        stepMs: 1000,
+        mistakeChance: 0.0,
+        topPool: 1
+      }
+    };
+
+    const AI_SPEEDS = {
+      verySlow: {
+        thinkFactor: 1.3,
+        stepFactor: 1.45
+      },
+      slow: {
+        thinkFactor: 1.1,
+        stepFactor: 1.2
+      },
+      normal: {
+        thinkFactor: 1.0,
+        stepFactor: 1.0
+      }
+    };
+
+    const TIME_CONTROLS = {
+      classic: {
+        initialMs: null,
+        label: "Classic (No Clock)"
+      },
+      rapid120: {
+        initialMs: 2 * 60 * 1000,
+        label: "Rapid (2m)"
+      },
+      standard300: {
+        initialMs: 5 * 60 * 1000,
+        label: "Standard (5m)"
+      }
+    };
+
+    const AI_BASELINE_RATING = {
+      easy: 1000,
+      soft: 1250,
+      hard: 1500,
+      expert: 1680
+    };
+
+    const CLOCK_WARNING_MS = 15000;
+    const CLOCK_CRITICAL_MS = 5000;
+
+    const THEMES = {
+      classic: { label: "Classic", premium: false, themeColor: "#2c1f1a" },
+      midnight: { label: "Midnight", premium: true, themeColor: "#0c1320" },
+      emerald: { label: "Emerald", premium: true, themeColor: "#1b4f3a" },
+      sunset: { label: "Sunset", premium: true, themeColor: "#7a3521" }
+    };
+
+    const VARIANTS = {
+      nigeria: {
+        label: "Nigeria",
+        badge: "Nigeria Variant",
+        note: "Flying kings. Men can capture backward."
+      },
+      african: {
+        label: "African",
+        badge: "African Variant",
+        note: "Flying kings. Men can capture backward."
+      },
+      usa: {
+        label: "USA",
+        badge: "USA Variant",
+        note: "Short kings. Men capture forward only."
+      },
+      english: {
+        label: "English",
+        badge: "English Variant",
+        note: "Short kings. Men capture forward only."
+      },
+      russia: {
+        label: "Russia",
+        badge: "Russia Variant",
+        note: "Flying kings. Men can capture backward."
+      }
+    };
+
+    const state = {
+      board: [],
+      turn: RED,
+      selected: null,
+      forcedPiece: null,
+      gameOver: false,
+      mode: "pvp",
+      aiColor: BLACK,
+      humanColor: RED,
+      aiLevel: "soft",
+      aiSpeed: "verySlow",
+      timeControl: "rapid120",
+      rules: {
+        forcedCaptures: true,
+        illegalMovePolicy: "penalty",
+        allowMenBackwardCapture: false,
+        flyingKings: false
+      },
+      playerNames: {
+        red: "Red Player",
+        black: "Black Player"
+      },
+      scores: {
+        red: 0,
+        black: 0
+      },
+      coins: 0,
+      stats: {
+        totalGames: 0,
+        redWins: 0,
+        blackWins: 0,
+        draws: 0,
+        aiGames: 0,
+        pvpGames: 0,
+        aiRating: 1200,
+        aiWins: 0,
+        aiLosses: 0,
+        aiDraws: 0,
+        currentStreak: 0,
+        bestStreak: 0
+      },
+      matchArchive: [],
+      monetization: {
+        adsRemoved: false,
+        proPass: false,
+        offlinePremium: false,
+        rewardCredits: 0,
+        undoCredits: 0,
+        pendingRewardKind: "",
+        rewardedListenerReady: false,
+        storeReady: false,
+        storeStatus: "Store not initialized yet."
+      },
+      matchReward: {
+        matchId: "",
+        baseCoins: 0,
+        bonusCoins: 0,
+        bonusClaimed: false
+      },
+      variant: "english",
+      theme: "classic",
+      flip: false,
+      thinking: false,
+      resultRecorded: false,
+      sinceProgress: 0,
+      positionCounts: {},
+      deferredInstallPrompt: null,
+      auditTrail: [],
+      activeGame: null,
+      history: [],
+      moveLog: [],
+      moveIndex: 0,
+      lastMove: null,
+      hintMove: null,
+      hintsRemaining: FREE_HINTS_PER_GAME,
+      undosRemaining: FREE_UNDOS_PER_GAME,
+      timeoutLoser: null,
+      clocks: {
+        redMs: 0,
+        blackMs: 0,
+        lastTickAt: 0,
+        armed: false
+      },
+      aiTimer: null,
+      clockTimer: null,
+      online: {
+        connected: false,
+        apiBase: "",
+        token: "",
+        playerId: "",
+        playerName: "",
+        playerRating: 1200,
+        queueing: false,
+        activeMatchId: "",
+        color: null,
+        opponentName: "",
+        opponentRating: 1200,
+        matchPollTimer: null,
+        queuePollTimer: null,
+        socket: null,
+        wsConnected: false,
+        wsRetryTimer: null,
+        lastRevision: 0,
+        status: "Online mode idle.",
+        finishedRevision: 0,
+        resultType: null,
+        winnerColor: null,
+        resultReason: ""
+      }
+    };
+
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const redCountEl = document.getElementById("redCount");
+    const blackCountEl = document.getElementById("blackCount");
+    const redScoreEl = document.getElementById("redScore");
+    const blackScoreEl = document.getElementById("blackScore");
+    const totalGamesStatEl = document.getElementById("totalGamesStat");
+    const drawsStatEl = document.getElementById("drawsStat");
+    const redWinsStatEl = document.getElementById("redWinsStat");
+    const blackWinsStatEl = document.getElementById("blackWinsStat");
+    const aiGamesStatEl = document.getElementById("aiGamesStat");
+    const pvpGamesStatEl = document.getElementById("pvpGamesStat");
+    const aiRatingStatEl = document.getElementById("aiRatingStat");
+    const bestStreakStatEl = document.getElementById("bestStreakStat");
+    const historyEl = document.getElementById("historyList");
+    const topFilesEl = document.getElementById("topFiles");
+    const bottomFilesEl = document.getElementById("bottomFiles");
+    const clockGridEl = document.getElementById("clockGrid");
+    const redClockEl = document.getElementById("redClock");
+    const blackClockEl = document.getElementById("blackClock");
+    const walletTopEl = document.getElementById("walletTop");
+
+    const redNameInput = document.getElementById("redNameInput");
+    const redNameLabel = document.getElementById("redNameLabel");
+    const blackNameInput = document.getElementById("blackNameInput");
+    const blackNameLabel = document.getElementById("blackNameLabel");
+    const variantPicker = document.getElementById("variantPicker");
+    const variantBadge = document.getElementById("variantBadge");
+    const variantNote = document.getElementById("variantNote");
+    const modeSelect = document.getElementById("modeSelect");
+    const sideRow = document.getElementById("sideRow");
+    const levelRow = document.getElementById("levelRow");
+    const speedRow = document.getElementById("speedRow");
+    const paceRow = document.getElementById("paceRow");
+    const captureRuleRow = document.getElementById("captureRuleRow");
+    const illegalMoveRow = document.getElementById("illegalMoveRow");
+    const sideSelect = document.getElementById("sideSelect");
+    const depthSelect = document.getElementById("depthSelect");
+    const speedSelect = document.getElementById("speedSelect");
+    const paceSelect = document.getElementById("paceSelect");
+    const captureRuleSelect = document.getElementById("captureRuleSelect");
+    const illegalMoveSelect = document.getElementById("illegalMoveSelect");
+    const newGameBtn = document.getElementById("newGameBtn");
+    const quickMatchBtn = document.getElementById("quickMatchBtn");
+    const undoBtn = document.getElementById("undoBtn");
+    const hintBtn = document.getElementById("hintBtn");
+    const flipBtn = document.getElementById("flipBtn");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const resetScoreBtn = document.getElementById("resetScoreBtn");
+    const coinWalletEl = document.getElementById("coinWallet");
+    const exportDataBtn = document.getElementById("exportDataBtn");
+    const importDataBtn = document.getElementById("importDataBtn");
+    const importDataInput = document.getElementById("importDataInput");
+    const clearAllDataBtn = document.getElementById("clearAllDataBtn");
+    const onlinePanel = document.getElementById("onlinePanel");
+    const onlineNameInput = document.getElementById("onlineNameInput");
+    const onlineApiInput = document.getElementById("onlineApiInput");
+    const onlineConnectBtn = document.getElementById("onlineConnectBtn");
+    const onlineQueueBtn = document.getElementById("onlineQueueBtn");
+    const onlineCancelQueueBtn = document.getElementById("onlineCancelQueueBtn");
+    const onlineSurrenderBtn = document.getElementById("onlineSurrenderBtn");
+    const onlineStatusEl = document.getElementById("onlineStatus");
+    const ladderListEl = document.getElementById("ladderList");
+    const buyRemoveAdsBtn = document.getElementById("buyRemoveAdsBtn");
+    const buyProPassBtn = document.getElementById("buyProPassBtn");
+    const buyOfflineUpgradeBtn = document.getElementById("buyOfflineUpgradeBtn");
+    const buyHintPackBtn = document.getElementById("buyHintPackBtn");
+    const buyUndoPackBtn = document.getElementById("buyUndoPackBtn");
+    const restorePurchasesBtn = document.getElementById("restorePurchasesBtn");
+    const watchRewardBtn = document.getElementById("watchRewardBtn");
+    const themeSelect = document.getElementById("themeSelect");
+    const storeStatusEl = document.getElementById("storeStatus");
+    const gameOverModalEl = document.getElementById("gameOverModal");
+    const gameOverTitleEl = document.getElementById("gameOverTitle");
+    const gameOverTextEl = document.getElementById("gameOverText");
+    const gameOverRewardTextEl = document.getElementById("gameOverRewardText");
+    const doubleCoinsBtn = document.getElementById("doubleCoinsBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const closeModalBtn = document.getElementById("closeModalBtn");
+    const installBtn = document.getElementById("installBtn");
+    const playNoteEl = document.getElementById("playNote");
+    const Core = window.CheckersCore || null;
+    let rewardedListenerBound = false;
+
+    function idx(row, col) {
+      return row * SIZE + col;
+    }
+
+    function rc(index) {
+      return { row: Math.floor(index / SIZE), col: index % SIZE };
+    }
+
+    function inBounds(row, col) {
+      return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    }
+
+    function isDark(row, col) {
+      return (row + col) % 2 === 1;
+    }
+
+    function owner(piece) {
+      return piece ? piece.toLowerCase() : null;
+    }
+
+    function isKing(piece) {
+      return piece === "R" || piece === "B";
+    }
+
+    function opposite(turn) {
+      return turn === RED ? BLACK : RED;
+    }
+
+    function directions(piece) {
+      if (isKing(piece)) return [-1, 1];
+      return owner(piece) === RED ? [-1] : [1];
+    }
+
+    function coord(index) {
+      const pos = rc(index);
+      return `${FILES[pos.col]}${SIZE - pos.row}`;
+    }
+
+    function levelName(value) {
+      if (value === "verySlow") return "Very Slow";
+      if (value === "soft") return "Soft";
+      if (value === "easy") return "Easy";
+      if (value === "hard") return "Hard";
+      if (value === "expert") return "Expert";
+      if (value === "slow") return "Slow";
+      if (value === "normal") return "Normal";
+      return value;
+    }
+
+    function hasNoAdsEntitlement() {
+      return state.monetization.adsRemoved || state.monetization.proPass;
+    }
+
+    function hasOfflinePremiumEntitlement() {
+      return state.monetization.offlinePremium || state.monetization.proPass;
+    }
+
+    function canUseTheme(themeId) {
+      const theme = THEMES[themeId] || THEMES.classic;
+      return !theme.premium || hasOfflinePremiumEntitlement();
+    }
+
+    function applyTheme(themeId, shouldPersist = true) {
+      const safeTheme = THEMES[themeId] ? themeId : "classic";
+      if (!canUseTheme(safeTheme)) {
+        state.theme = "classic";
+      } else {
+        state.theme = safeTheme;
+      }
+
+      document.body.setAttribute("data-theme", state.theme);
+      themeSelect.value = state.theme;
+      const metaTheme = document.querySelector('meta[name=\"theme-color\"]');
+      if (metaTheme) {
+        metaTheme.setAttribute("content", THEMES[state.theme].themeColor);
+      }
+
+      if (shouldPersist) saveProfile();
+    }
+
+    function normalizeVariant(variantId) {
+      return VARIANTS[variantId] ? variantId : "english";
+    }
+
+    function refreshVariantUI() {
+      const variant = VARIANTS[state.variant] || VARIANTS.english;
+      document.body.setAttribute("data-variant", state.variant);
+      if (variantBadge) variantBadge.textContent = variant.badge;
+      if (variantNote) variantNote.textContent = variant.note;
+      if (!variantPicker) return;
+      variantPicker.querySelectorAll("button[data-variant]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.variant === state.variant);
+      });
+    }
+
+    function applyVariant(variantId, shouldPersist = true) {
+      state.variant = normalizeVariant(variantId);
+      refreshVariantUI();
+      if (shouldPersist) saveProfile();
+    }
+
+    function buildMultiplayerSyncState() {
+      if (Core && typeof Core.createSyncState === "function") {
+        return Core.createSyncState({
+          board: state.board,
+          turn: state.turn,
+          forcedPiece: state.forcedPiece,
+          moveIndex: state.moveIndex,
+          sinceProgress: state.sinceProgress
+        });
+      }
+      return {
+        schema: "checkers-sync-v1",
+        board: state.board.slice(),
+        turn: state.turn,
+        forcedPiece: state.forcedPiece,
+        moveIndex: state.moveIndex,
+        sinceProgress: state.sinceProgress,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    function getTimeControlProfile() {
+      return TIME_CONTROLS[state.timeControl] || TIME_CONTROLS.rapid120;
+    }
+
+    function formatClock(ms) {
+      const safe = Math.max(0, Math.ceil(ms / 1000));
+      const minutes = Math.floor(safe / 60);
+      const seconds = safe % 60;
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    }
+
+    function setPlayNote(message = "") {
+      if (!playNoteEl) return;
+      playNoteEl.textContent = message;
+    }
+
+    function applyRuleSettings() {
+      state.rules.forcedCaptures = captureRuleSelect.value !== "casual";
+      state.rules.illegalMovePolicy = illegalMoveSelect.value === "penalty" ? "penalty" : "strict";
+      state.rules.allowMenBackwardCapture = state.variant === "russia" || state.variant === "nigeria" || state.variant === "african";
+      state.rules.flyingKings = state.variant === "russia" || state.variant === "nigeria" || state.variant === "african";
+    }
+
+    function canUseCoreEngine() {
+      return !state.rules.allowMenBackwardCapture && !state.rules.flyingKings;
+    }
+
+    function defaultOnlineApiBase() {
+      const host = window.location.hostname || "127.0.0.1";
+      const sameOrigin = `${window.location.origin}/api/checkers`;
+      if (window.location.port === "4000") return sameOrigin;
+      if (window.location.protocol === "http:" && (host === "localhost" || host === "127.0.0.1")) {
+        return "http://127.0.0.1:4000/api/checkers";
+      }
+      return sameOrigin;
+    }
+
+    function normalizeOnlineApiBase(value) {
+      const raw = String(value || "").trim();
+      if (!raw) return defaultOnlineApiBase();
+      return raw.replace(/\/+$/, "");
+    }
+
+    function setOnlineStatus(message) {
+      state.online.status = message;
+      if (onlineStatusEl) onlineStatusEl.textContent = message;
+    }
+
+    function onlineSocketUrl(apiBase) {
+      try {
+        const url = new URL(apiBase);
+        url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+        url.pathname = `${url.pathname.replace(/\/+$/, "")}/ws`;
+        url.search = "";
+        return url.toString();
+      } catch (_err) {
+        return "";
+      }
+    }
+
+    function clearOnlineSocketRetry() {
+      if (state.online.wsRetryTimer) {
+        clearTimeout(state.online.wsRetryTimer);
+        state.online.wsRetryTimer = null;
+      }
+    }
+
+    function closeOnlineSocket() {
+      clearOnlineSocketRetry();
+      const socket = state.online.socket;
+      state.online.socket = null;
+      state.online.wsConnected = false;
+      if (socket) {
+        try {
+          socket.close();
+        } catch (_err) {
+        }
+      }
+    }
+
+    function sendOnlineSocketMessage(payload) {
+      const socket = state.online.socket;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      try {
+        socket.send(JSON.stringify(payload));
+      } catch (_err) {
+      }
+    }
+
+    function subscribeOnlineMatch(matchId) {
+      if (!matchId) return;
+      sendOnlineSocketMessage({
+        type: "subscribe_match",
+        matchId
+      });
+    }
+
+    function stopOnlinePolling() {
+      if (state.online.queuePollTimer) {
+        clearInterval(state.online.queuePollTimer);
+        state.online.queuePollTimer = null;
+      }
+      if (state.online.matchPollTimer) {
+        clearInterval(state.online.matchPollTimer);
+        state.online.matchPollTimer = null;
+      }
+    }
+
+    function clearOnlineMatchContext() {
+      state.online.queueing = false;
+      state.online.activeMatchId = "";
+      state.online.color = null;
+      state.online.opponentName = "";
+      state.online.opponentRating = 1200;
+      state.online.lastRevision = 0;
+      state.online.finishedRevision = 0;
+      state.online.resultType = null;
+      state.online.winnerColor = null;
+      state.online.resultReason = "";
+      stopOnlinePolling();
+    }
+
+    async function syncOnlineMatchById(matchId, sinceRevision = null) {
+      if (!state.online.connected || !state.online.token || !matchId) return;
+      let path = `/matches/${matchId}`;
+      if (Number.isInteger(sinceRevision) && sinceRevision >= 0) {
+        path += `?since=${sinceRevision}`;
+      }
+      const data = await onlineFetch(path);
+      if (!data.unchanged && data.match) {
+        applyOnlineMatchSnapshot(data.match);
+        render();
+      }
+    }
+
+    async function handleOnlineSocketMessage(message) {
+      const type = String(message && message.type ? message.type : "");
+      if (!type) return;
+
+      if (type === "hello") return;
+      if (type === "pong") return;
+      if (type === "subscribed") return;
+
+      if (type === "auth_ok") {
+        state.online.wsConnected = true;
+        if (state.online.activeMatchId) {
+          subscribeOnlineMatch(state.online.activeMatchId);
+        }
+        if (state.mode === "online") {
+          setOnlineStatus("Realtime connected. Waiting for ranked updates.");
+        }
+        render();
+        return;
+      }
+
+      if (type === "auth_error" || type === "auth_required") {
+        setOnlineStatus("Realtime auth failed. Reconnect online session.");
+        closeOnlineSocket();
+        render();
+        return;
+      }
+
+      if (type === "match_found") {
+        const matchId = String(message.matchId || "");
+        if (!matchId) return;
+        state.online.queueing = false;
+        stopOnlinePolling();
+        await syncOnlineMatchById(matchId);
+        subscribeOnlineMatch(matchId);
+        startOnlineMatchPolling();
+        return;
+      }
+
+      if (type === "match_changed") {
+        const matchId = String(message.matchId || "");
+        if (!matchId) return;
+        if (state.online.activeMatchId && state.online.activeMatchId !== matchId) {
+          return;
+        }
+        const revision = Number(message.revision);
+        await syncOnlineMatchById(matchId, Number.isFinite(revision) ? revision - 1 : null);
+      }
+    }
+
+    function scheduleOnlineSocketReconnect() {
+      if (!state.online.connected || !state.online.token) return;
+      if (state.online.wsRetryTimer) return;
+      state.online.wsRetryTimer = setTimeout(() => {
+        state.online.wsRetryTimer = null;
+        connectOnlineSocket();
+      }, 1600);
+    }
+
+    function connectOnlineSocket() {
+      if (!state.online.connected || !state.online.token) return;
+      if (typeof WebSocket === "undefined") return;
+      const existing = state.online.socket;
+      if (existing && (existing.readyState === WebSocket.OPEN || existing.readyState === WebSocket.CONNECTING)) {
+        return;
+      }
+
+      clearOnlineSocketRetry();
+      const url = onlineSocketUrl(state.online.apiBase);
+      if (!url) return;
+
+      let socket;
+      try {
+        socket = new WebSocket(url);
+      } catch (_err) {
+        scheduleOnlineSocketReconnect();
+        return;
+      }
+
+      state.online.socket = socket;
+      state.online.wsConnected = false;
+
+      socket.addEventListener("open", () => {
+        state.online.wsConnected = true;
+        sendOnlineSocketMessage({
+          type: "auth",
+          token: state.online.token
+        });
+        if (state.online.activeMatchId) {
+          subscribeOnlineMatch(state.online.activeMatchId);
+        }
+        render();
+      });
+
+      socket.addEventListener("message", (event) => {
+        let data = null;
+        try {
+          data = JSON.parse(String(event.data || ""));
+        } catch (_err) {
+          return;
+        }
+        handleOnlineSocketMessage(data);
+      });
+
+      socket.addEventListener("close", () => {
+        if (state.online.socket === socket) {
+          state.online.socket = null;
+        }
+        state.online.wsConnected = false;
+        render();
+        scheduleOnlineSocketReconnect();
+      });
+
+      socket.addEventListener("error", () => {
+      });
+    }
+
+    async function onlineFetch(pathname, { method = "GET", body, auth = true } = {}) {
+      const headers = {};
+      if (body !== undefined) {
+        headers["Content-Type"] = "application/json";
+      }
+      if (auth && state.online.token) {
+        headers.Authorization = `Bearer ${state.online.token}`;
+      }
+
+      const response = await fetch(`${state.online.apiBase}${pathname}`, {
+        method,
+        headers,
+        body: body !== undefined ? JSON.stringify(body) : undefined
+      });
+
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch (_err) {
+      }
+
+      if (!response.ok) {
+        const message = payload && payload.error ? payload.error : `Online request failed (${response.status}).`;
+        throw new Error(message);
+      }
+
+      return payload || {};
+    }
+
+    function renderLadder(entries) {
+      ladderListEl.innerHTML = "";
+      if (!Array.isArray(entries) || entries.length === 0) {
+        const item = document.createElement("li");
+        item.textContent = "No ladder data yet.";
+        ladderListEl.appendChild(item);
+        return;
+      }
+
+      entries.forEach((entry, index) => {
+        const item = document.createElement("li");
+        item.textContent = `#${index + 1} ${entry.displayName} - ${entry.rating} (${entry.wins}W/${entry.losses}L/${entry.draws}D)`;
+        ladderListEl.appendChild(item);
+      });
+    }
+
+    async function loadOnlineLadder() {
+      try {
+        const data = await onlineFetch("/leaderboard?limit=10", { auth: false });
+        renderLadder(data.leaderboard || []);
+      } catch (_err) {
+      }
+    }
+
+    function applyOnlineMatchSnapshot(match) {
+      if (!match) return;
+      clearAITimer();
+      clearClockTimer();
+
+      state.mode = "online";
+      modeSelect.value = "online";
+      state.online.activeMatchId = match.id;
+      state.online.lastRevision = match.revision || 0;
+      state.online.color = match.you && match.you.color ? match.you.color : null;
+      state.online.opponentName = match.opponent && match.opponent.name ? match.opponent.name : "Opponent";
+      state.online.opponentRating = match.opponent && Number.isFinite(match.opponent.rating)
+        ? match.opponent.rating
+        : 1200;
+      state.online.queueing = false;
+      state.online.resultType = match.resultType || null;
+      state.online.winnerColor = match.winnerColor === BLACK ? BLACK : match.winnerColor === RED ? RED : null;
+      state.online.resultReason = String(match.resultReason || "");
+      applyModeSettings();
+
+      state.playerNames.red = match.players && match.players.red ? match.players.red.name : state.playerNames.red;
+      state.playerNames.black = match.players && match.players.black ? match.players.black.name : state.playerNames.black;
+      state.board = Array.isArray(match.board) && match.board.length === SIZE * SIZE ? match.board.slice() : createBoard();
+      state.turn = match.turn === BLACK ? BLACK : RED;
+      state.forcedPiece = Number.isInteger(match.forcedPiece) ? match.forcedPiece : null;
+      state.moveLog = Array.isArray(match.moveLog) ? match.moveLog.slice() : [];
+      state.moveIndex = Number.isFinite(match.moveIndex) ? match.moveIndex : state.moveLog.length;
+      state.selected = null;
+      state.hintMove = null;
+      state.timeoutLoser = null;
+      state.gameOver = match.status !== "active";
+      state.thinking = false;
+      state.resultRecorded = true;
+      state.history = [];
+
+      if (match.status === "active") {
+        setOnlineStatus(`Matched vs ${state.online.opponentName} (${state.online.opponentRating}).`);
+        subscribeOnlineMatch(match.id);
+        startOnlineMatchPolling();
+      } else {
+        stopOnlinePolling();
+        state.online.activeMatchId = "";
+        state.online.queueing = false;
+        const winnerName = match.winnerColor === RED ? state.playerNames.red : state.playerNames.black;
+        const reason = match.resultReason ? ` ${match.resultReason}` : "";
+        setOnlineStatus(`Match finished.${reason}`);
+        if (state.online.finishedRevision !== match.revision) {
+          state.online.finishedRevision = match.revision;
+          if (match.resultType === "draw") {
+            showGameOverModal({
+              type: "draw",
+              message: match.resultReason || "Draw"
+            });
+          } else {
+            showGameOverModal({
+              type: "win",
+              winner: match.winnerColor === BLACK ? BLACK : RED,
+              reason: reason || ` ${winnerName} won.`
+            });
+          }
+          loadOnlineLadder();
+        }
+      }
+    }
+
+    function startOnlineMatchPolling() {
+      if (!state.online.activeMatchId || !state.online.connected) return;
+      if (state.online.matchPollTimer) return;
+      state.online.matchPollTimer = setInterval(async () => {
+        if (!state.online.activeMatchId || !state.online.connected) return;
+        try {
+          const data = await onlineFetch(`/matches/${state.online.activeMatchId}?since=${state.online.lastRevision}`);
+          if (!data.unchanged && data.match) {
+            applyOnlineMatchSnapshot(data.match);
+            render();
+          }
+        } catch (err) {
+          setOnlineStatus(`Online sync error: ${err.message}`);
+        }
+      }, ONLINE_POLL_MS);
+    }
+
+    function startOnlineQueuePolling() {
+      if (state.online.queuePollTimer) return;
+      state.online.queuePollTimer = setInterval(async () => {
+        if (!state.online.queueing || !state.online.connected) return;
+        try {
+          const data = await onlineFetch("/matchmaking/status");
+          if (data.state === "matched" && data.match) {
+            applyOnlineMatchSnapshot(data.match);
+            stopOnlinePolling();
+            startOnlineMatchPolling();
+            render();
+            return;
+          }
+          if (data.state === "queued" && data.queue) {
+            setOnlineStatus(
+              `Searching... queue #${data.queue.position}/${data.queue.queueSize} (${data.queue.waitedSec}s).`
+            );
+          }
+        } catch (err) {
+          setOnlineStatus(`Queue polling failed: ${err.message}`);
+        }
+      }, ONLINE_POLL_MS);
+    }
+
+    async function connectOnline() {
+      try {
+        closeOnlineSocket();
+        state.online.apiBase = normalizeOnlineApiBase(onlineApiInput.value);
+        onlineApiInput.value = state.online.apiBase;
+        const desiredName = sanitizeName(onlineNameInput.value || state.playerNames.red, "Player");
+        const data = await onlineFetch("/session", {
+          method: "POST",
+          auth: false,
+          body: { name: desiredName }
+        });
+        state.online.connected = true;
+        state.online.token = data.token;
+        state.online.playerId = data.player.id;
+        state.online.playerName = data.player.displayName;
+        state.online.playerRating = data.player.rating;
+        onlineNameInput.value = state.online.playerName;
+        setOnlineStatus(`Connected as ${state.online.playerName} (rating ${state.online.playerRating}).`);
+        connectOnlineSocket();
+        saveProfile();
+        await loadOnlineLadder();
+        render();
+      } catch (err) {
+        closeOnlineSocket();
+        state.online.connected = false;
+        state.online.token = "";
+        setOnlineStatus(`Online connect failed: ${err.message}`);
+      }
+    }
+
+    async function resumeOnlineSession() {
+      if (!state.online.token) {
+        state.online.connected = false;
+        return;
+      }
+      try {
+        const data = await onlineFetch("/me");
+        state.online.connected = true;
+        state.online.playerId = data.player.id;
+        state.online.playerName = data.player.displayName;
+        state.online.playerRating = data.player.rating;
+        onlineNameInput.value = state.online.playerName;
+        setOnlineStatus(`Online session restored for ${state.online.playerName} (${state.online.playerRating}).`);
+        connectOnlineSocket();
+      } catch (_err) {
+        closeOnlineSocket();
+        state.online.connected = false;
+        state.online.token = "";
+        state.online.playerId = "";
+        state.online.playerName = "";
+        state.online.playerRating = 1200;
+        setOnlineStatus("Online session expired. Connect again.");
+      }
+    }
+
+    async function joinOnlineMatchmaking() {
+      if (!state.online.connected || !state.online.token) {
+        setOnlineStatus("Connect your online session first.");
+        return;
+      }
+      clearOnlineMatchContext();
+      try {
+        const data = await onlineFetch("/matchmaking/join", {
+          method: "POST",
+          body: {
+            timeControl: state.timeControl,
+            captureRule: state.rules.forcedCaptures ? "forced" : "casual"
+          }
+        });
+        if (data.state === "matched" && data.match) {
+          applyOnlineMatchSnapshot(data.match);
+          startOnlineMatchPolling();
+          render();
+          return;
+        }
+        state.online.queueing = true;
+        setOnlineStatus("Searching for a ranked opponent...");
+        startOnlineQueuePolling();
+        render();
+      } catch (err) {
+        setOnlineStatus(`Matchmaking failed: ${err.message}`);
+      }
+    }
+
+    async function cancelOnlineQueue() {
+      if (!state.online.connected) return;
+      try {
+        await onlineFetch("/matchmaking/leave", {
+          method: "POST",
+          body: {}
+        });
+        state.online.queueing = false;
+        if (!state.online.activeMatchId) {
+          stopOnlinePolling();
+        }
+        setOnlineStatus("Queue canceled.");
+        render();
+      } catch (err) {
+        setOnlineStatus(`Unable to cancel queue: ${err.message}`);
+      }
+    }
+
+    async function surrenderOnlineMatch() {
+      if (!state.online.connected || !state.online.activeMatchId) return;
+      try {
+        const data = await onlineFetch(`/matches/${state.online.activeMatchId}/surrender`, {
+          method: "POST",
+          body: {}
+        });
+        if (data.match) {
+          applyOnlineMatchSnapshot(data.match);
+          render();
+        }
+      } catch (err) {
+        setOnlineStatus(`Resign failed: ${err.message}`);
+      }
+    }
+
+    async function submitOnlineMove(move) {
+      if (!state.online.connected || !state.online.activeMatchId) return false;
+      try {
+        state.thinking = true;
+        render();
+        const data = await onlineFetch(`/matches/${state.online.activeMatchId}/move`, {
+          method: "POST",
+          body: {
+            from: move.from,
+            to: move.to,
+            clientSyncState: buildMultiplayerSyncState()
+          }
+        });
+        if (data.match) {
+          applyOnlineMatchSnapshot(data.match);
+          saveProfile();
+        }
+        state.thinking = false;
+        render();
+        return true;
+      } catch (err) {
+        state.thinking = false;
+        setOnlineStatus(`Move rejected: ${err.message}`);
+        render();
+        return false;
+      }
+    }
+
+    function sanitizeName(name, fallback) {
+      const clean = String(name || "").trim().slice(0, 32);
+      return clean || fallback;
+    }
+
+    function applyPlayerName(color, rawValue, persist = false) {
+      const fallback = color === RED ? "Red Player" : state.mode === "ai" ? "Computer" : "Black Player";
+      const safe = sanitizeName(rawValue, fallback);
+      if (color === RED) {
+        state.playerNames.red = safe;
+        redNameInput.value = safe;
+      } else {
+        state.playerNames.black = safe;
+        blackNameInput.value = safe;
+      }
+      if (persist) {
+        saveProfile();
+        render();
+      }
+    }
+
+    function playerName(color) {
+      return color === RED ? state.playerNames.red : state.playerNames.black;
+    }
+
+    function sideName(color) {
+      return `${playerName(color)} (${color === RED ? "Red" : "Black"})`;
+    }
+
+    function applyModeSettings() {
+      if (state.mode === "ai") {
+        state.humanColor = sideSelect.value === "black" ? BLACK : RED;
+        state.aiColor = opposite(state.humanColor);
+      } else if (state.mode === "online") {
+        state.humanColor = state.online.color || RED;
+        state.aiColor = opposite(state.humanColor);
+      } else {
+        state.humanColor = RED;
+        state.aiColor = BLACK;
+      }
+    }
+
+    function maybeAssignComputerName() {
+      if (state.mode !== "ai") return;
+      const key = state.aiColor === RED ? "red" : "black";
+      const current = state.playerNames[key];
+      if (!String(current || "").trim()) {
+        state.playerNames[key] = "Computer";
+      }
+    }
+
+    function isHumanTurn() {
+      if (state.mode === "online") {
+        return state.turn === state.online.color;
+      }
+      if (state.mode !== "ai") return true;
+      return state.turn === state.humanColor;
+    }
+
+    function clearClockTimer() {
+      if (state.clockTimer) {
+        clearInterval(state.clockTimer);
+        state.clockTimer = null;
+      }
+    }
+
+    function resetClocks() {
+      const profile = getTimeControlProfile();
+      if (!profile.initialMs) {
+        state.clocks.redMs = 0;
+        state.clocks.blackMs = 0;
+        state.clocks.lastTickAt = 0;
+        state.clocks.armed = false;
+        state.timeoutLoser = null;
+        clearClockTimer();
+        return;
+      }
+      state.clocks.redMs = profile.initialMs;
+      state.clocks.blackMs = profile.initialMs;
+      state.clocks.lastTickAt = 0;
+      state.clocks.armed = false;
+      state.timeoutLoser = null;
+      clearClockTimer();
+    }
+
+    function ensureClockTimer() {
+      const timed = Boolean(getTimeControlProfile().initialMs);
+      if (!timed || state.gameOver || !state.clocks.armed) {
+        clearClockTimer();
+        return;
+      }
+      if (state.clockTimer) return;
+      state.clocks.lastTickAt = Date.now();
+      state.clockTimer = setInterval(tickClock, 250);
+    }
+
+    function tickClock() {
+      const profile = getTimeControlProfile();
+      if (!profile.initialMs || state.gameOver || !state.clocks.armed) {
+        clearClockTimer();
+        return;
+      }
+
+      const now = Date.now();
+      if (!state.clocks.lastTickAt) {
+        state.clocks.lastTickAt = now;
+        return;
+      }
+
+      const elapsed = Math.max(0, now - state.clocks.lastTickAt);
+      state.clocks.lastTickAt = now;
+      if (elapsed === 0) return;
+
+      const key = state.turn === RED ? "redMs" : "blackMs";
+      state.clocks[key] = Math.max(0, state.clocks[key] - elapsed);
+      if (state.clocks[key] === 0 && !state.timeoutLoser) {
+        state.timeoutLoser = state.turn;
+        appendAuditEvent("timeout", { loser: state.timeoutLoser });
+        render();
+        return;
+      }
+
+      updateClockUI();
+    }
+
+    function updateClockUI() {
+      if (state.mode === "online") {
+        clockGridEl.hidden = true;
+        return;
+      }
+      const profile = getTimeControlProfile();
+      const timed = Boolean(profile.initialMs);
+      clockGridEl.hidden = !timed;
+      if (!timed) return;
+
+      redClockEl.textContent = `${playerName(RED)} ${formatClock(state.clocks.redMs)}`;
+      blackClockEl.textContent = `${playerName(BLACK)} ${formatClock(state.clocks.blackMs)}`;
+      redClockEl.classList.toggle("active", state.clocks.armed && state.turn === RED && !state.gameOver);
+      blackClockEl.classList.toggle("active", state.clocks.armed && state.turn === BLACK && !state.gameOver);
+      redClockEl.classList.toggle("waiting", !state.clocks.armed && !state.gameOver);
+      blackClockEl.classList.toggle("waiting", !state.clocks.armed && !state.gameOver);
+      redClockEl.classList.toggle(
+        "warning",
+        state.clocks.redMs > CLOCK_CRITICAL_MS && state.clocks.redMs <= CLOCK_WARNING_MS && state.clocks.armed
+      );
+      blackClockEl.classList.toggle(
+        "warning",
+        state.clocks.blackMs > CLOCK_CRITICAL_MS && state.clocks.blackMs <= CLOCK_WARNING_MS && state.clocks.armed
+      );
+      redClockEl.classList.toggle("critical", state.clocks.redMs > 0 && state.clocks.redMs <= CLOCK_CRITICAL_MS && state.clocks.armed);
+      blackClockEl.classList.toggle("critical", state.clocks.blackMs > 0 && state.clocks.blackMs <= CLOCK_CRITICAL_MS && state.clocks.armed);
+      redClockEl.classList.toggle("out", state.clocks.redMs === 0);
+      blackClockEl.classList.toggle("out", state.clocks.blackMs === 0);
+    }
+
+    function availableHintCredits() {
+      return toSafeCount(state.hintsRemaining) + toSafeCount(state.monetization.rewardCredits);
+    }
+
+    function consumeHintCredit() {
+      if (state.hintsRemaining > 0) {
+        state.hintsRemaining -= 1;
+        return true;
+      }
+      if (state.monetization.rewardCredits > 0) {
+        state.monetization.rewardCredits -= 1;
+        return true;
+      }
+      return false;
+    }
+
+    function chooseBestActionForTurn(turn, depth) {
+      if (
+        canUseCoreEngine() &&
+        Core &&
+        typeof Core.generateActions === "function" &&
+        typeof Core.minimaxAlphaBeta === "function"
+      ) {
+        const actions = Core.generateActions(state.board, turn, {
+          enforceCaptureRule: state.rules.forcedCaptures
+        });
+        if (actions.length === 0) return null;
+        let best = null;
+        let bestScore = -Infinity;
+        const cache = new Map();
+
+        for (const action of actions) {
+          const out = Core.minimaxAlphaBeta(
+            action.boardAfter,
+            opposite(turn),
+            Math.max(1, depth - 1),
+            -Infinity,
+            Infinity,
+            turn,
+            { enforceCaptureRule: state.rules.forcedCaptures },
+            cache
+          );
+          if (out.score > bestScore) {
+            bestScore = out.score;
+            best = action;
+          }
+        }
+        return best;
+      }
+
+      const actions = generateActions(state.board, turn);
+      if (actions.length === 0) return null;
+      let best = null;
+      let bestScore = -Infinity;
+
+      for (const action of actions) {
+        const out = minimax(action.boardAfter, opposite(turn), depth - 1, -Infinity, Infinity, turn);
+        if (out.score > bestScore) {
+          bestScore = out.score;
+          best = action;
+        }
+      }
+      return best;
+    }
+
+    function requestHint() {
+      if (state.gameOver || state.thinking) return;
+      if (state.mode === "online") {
+        statusEl.textContent = "Hints are disabled in ranked online matches.";
+        return;
+      }
+      if (state.mode === "ai" && state.turn !== state.humanColor) {
+        statusEl.textContent = "Wait for your turn to request a hint.";
+        return;
+      }
+      if (!consumeHintCredit()) {
+        statusEl.textContent = "No hints available. Watch a rewarded ad for more hints.";
+        return;
+      }
+
+      const profile = getAIProfile();
+      const depth = Math.max(2, Math.min(4, profile.depth));
+      const action = chooseBestActionForTurn(state.turn, depth);
+      if (!action || !action.sequence || action.sequence.length === 0) {
+        statusEl.textContent = "No hint available for this position.";
+        return;
+      }
+
+      const suggested = action.sequence[0];
+      state.hintMove = { from: suggested.from, to: suggested.to };
+      appendAuditEvent("hint_used", { turn: state.turn, from: coord(suggested.from), to: coord(suggested.to) });
+      setStoreStatus(`Hint used. Free hints: ${state.hintsRemaining}, reward hints: ${state.monetization.rewardCredits}.`);
+      render();
+    }
+
+    function updateHintButton() {
+      const total = availableHintCredits();
+      hintBtn.textContent = `Hint (${total})`;
+      const aiTurnBlock = state.mode === "ai" && state.turn !== state.humanColor;
+      const onlineBlock = state.mode === "online";
+      hintBtn.disabled = state.gameOver || state.thinking || total < 1 || aiTurnBlock || onlineBlock;
+    }
+
+    function aiBaselineRating() {
+      return AI_BASELINE_RATING[state.aiLevel] || AI_BASELINE_RATING.soft;
+    }
+
+    function updateAiRatingProgress(result) {
+      if (state.mode !== "ai") return;
+
+      let outcome = 0;
+      if (result.type === "draw") {
+        outcome = 0.5;
+        state.stats.aiDraws += 1;
+        state.stats.currentStreak = 0;
+      } else if (result.winner === state.humanColor) {
+        outcome = 1;
+        state.stats.aiWins += 1;
+        state.stats.currentStreak += 1;
+        state.stats.bestStreak = Math.max(state.stats.bestStreak, state.stats.currentStreak);
+      } else {
+        outcome = 0;
+        state.stats.aiLosses += 1;
+        state.stats.currentStreak = 0;
+      }
+
+      const current = state.stats.aiRating;
+      const expected = 1 / (1 + Math.pow(10, (aiBaselineRating() - current) / 400));
+      const next = Math.round(current + 24 * (outcome - expected));
+      state.stats.aiRating = Math.max(600, next);
+    }
+
+    function startQuickMatch() {
+      modeSelect.value = "ai";
+      state.mode = "ai";
+      sideSelect.value = Math.random() < 0.5 ? "red" : "black";
+      const roll = Math.random();
+      depthSelect.value = roll < 0.2 ? "easy" : roll < 0.8 ? "soft" : "hard";
+      speedSelect.value = "slow";
+      paceSelect.value = "rapid120";
+      captureRuleSelect.value = "forced";
+
+      state.aiLevel = depthSelect.value;
+      state.aiSpeed = speedSelect.value;
+      state.timeControl = paceSelect.value;
+      applyModeSettings();
+      applyRuleSettings();
+      maybeAssignComputerName();
+      syncNameInputs();
+      resetGame();
+      setPlayNote("Quick match uses Rapid (2m each side).");
+      render();
+    }
+
+    function capacitorPlatform() {
+      try {
+        return window.Capacitor && typeof window.Capacitor.getPlatform === "function"
+          ? window.Capacitor.getPlatform()
+          : "web";
+      } catch (err) {
+        return "web";
+      }
+    }
+
+    function isNativePlatform() {
+      const p = capacitorPlatform();
+      return p === "android" || p === "ios";
+    }
+
+    function adsBuildChannel() {
+      const raw = String(ADS_CHANNEL_PLACEHOLDER || "").toLowerCase();
+      return raw === "release" ? "release" : "debug";
+    }
+
+    function useAdTestMode() {
+      if (!isNativePlatform()) return true;
+      return adsBuildChannel() !== "release";
+    }
+
+    function getPlugins() {
+      const plugins = window.Capacitor && window.Capacitor.Plugins ? window.Capacitor.Plugins : {};
+      return {
+        AdMob: plugins.AdMob,
+        Purchases: plugins.Purchases
+      };
+    }
+
+    function getAdUnit(kind) {
+      const p = capacitorPlatform();
+      if (p === "android") return MONETIZATION.admob.android[kind];
+      if (p === "ios") return MONETIZATION.admob.ios[kind];
+      return null;
+    }
+
+    function getRevenueCatProduct(productKey) {
+      const p = capacitorPlatform();
+      const suffix = p === "android" ? "Android" : "IOS";
+      const prop = `product${productKey}${suffix}`;
+      return MONETIZATION.revenueCat[prop] || "";
+    }
+
+    function setStoreStatus(message) {
+      state.monetization.storeStatus = message;
+      if (storeStatusEl) storeStatusEl.textContent = message;
+    }
+
+    function calculateBaseMatchCoins(result) {
+      if (!result || result.type === "draw") return MATCH_COIN_PAYOUT.draw;
+      if (state.mode === "ai") {
+        return result.winner === state.humanColor ? MATCH_COIN_PAYOUT.aiWin : MATCH_COIN_PAYOUT.aiLoss;
+      }
+      return MATCH_COIN_PAYOUT.pvpWin;
+    }
+
+    function calculateRewardedBonus(baseCoins) {
+      if (baseCoins < 20) return 50;
+      return baseCoins;
+    }
+
+    function canClaimMatchRewardBonus() {
+      if (state.mode === "online") return false;
+      if (hasNoAdsEntitlement()) return false;
+      if (!isNativePlatform()) return false;
+      if (state.matchReward.baseCoins <= 0) return false;
+      return !state.matchReward.bonusClaimed;
+    }
+
+    function renderMatchRewardUI() {
+      if (!gameOverRewardTextEl || !doubleCoinsBtn) return;
+      if (state.mode === "online" || state.matchReward.baseCoins <= 0) {
+        gameOverRewardTextEl.hidden = true;
+        doubleCoinsBtn.hidden = true;
+        return;
+      }
+
+      const base = state.matchReward.baseCoins;
+      const bonus = state.matchReward.bonusCoins;
+      const wallet = state.coins;
+      gameOverRewardTextEl.hidden = false;
+
+      if (state.matchReward.bonusClaimed) {
+        gameOverRewardTextEl.textContent = `Match reward claimed: ${base}+${bonus} coins. Wallet: ${wallet}.`;
+        doubleCoinsBtn.hidden = true;
+      } else {
+        gameOverRewardTextEl.textContent = `You earned ${base} coins. Wallet: ${wallet}.`;
+        doubleCoinsBtn.hidden = !canClaimMatchRewardBonus();
+        doubleCoinsBtn.textContent = `Watch Ad: +${bonus} Coins`;
+      }
+    }
+
+    function applyRewardFromAd() {
+      const rewardKind = state.monetization.pendingRewardKind;
+      if (!rewardKind) return;
+
+      if (rewardKind === "match_double") {
+        if (!state.matchReward.bonusClaimed && state.matchReward.bonusCoins > 0) {
+          state.coins += state.matchReward.bonusCoins;
+          state.matchReward.bonusClaimed = true;
+          setStoreStatus(`Reward earned: +${state.matchReward.bonusCoins} bonus coins.`);
+          appendAuditEvent("reward_granted_match_bonus", { coins: state.matchReward.bonusCoins });
+        }
+      } else {
+        state.monetization.rewardCredits += REWARDED_HINT_CREDIT;
+        setStoreStatus(`Reward earned: +${REWARDED_HINT_CREDIT} hint credit.`);
+        appendAuditEvent("reward_granted_hint", { credits: REWARDED_HINT_CREDIT });
+      }
+
+      state.monetization.pendingRewardKind = "";
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function ensureRewardedListener() {
+      const { AdMob } = getPlugins();
+      if (!AdMob || rewardedListenerBound) return;
+      try {
+        await AdMob.addListener(REWARDED_EVENT_NAME, () => {
+          applyRewardFromAd();
+        });
+        await AdMob.addListener(REWARDED_DISMISSED_EVENT_NAME, () => {
+          state.monetization.pendingRewardKind = "";
+        });
+        await AdMob.addListener(REWARDED_FAILED_EVENT_NAME, () => {
+          state.monetization.pendingRewardKind = "";
+        });
+        rewardedListenerBound = true;
+        state.monetization.rewardedListenerReady = true;
+      } catch (err) {
+        appendAuditEvent("reward_listener_failed", { message: String(err) });
+      }
+    }
+
+    async function preloadRewardedAd() {
+      const { AdMob } = getPlugins();
+      if (!AdMob || !isNativePlatform() || hasNoAdsEntitlement()) return;
+      const adId = getAdUnit("rewarded");
+      if (!adId) return;
+      try {
+        await AdMob.prepareRewardVideoAd({ adId, isTesting: useAdTestMode() });
+      } catch (_err) {
+      }
+    }
+
+    function updateStoreUI() {
+      const native = isNativePlatform();
+      const adsRemoved = hasNoAdsEntitlement();
+      const offlinePremium = hasOfflinePremiumEntitlement();
+      const rcReady = state.monetization.storeReady;
+      buyRemoveAdsBtn.disabled = !native || state.monetization.adsRemoved || !rcReady;
+      buyProPassBtn.disabled = !native || state.monetization.proPass || !rcReady;
+      buyOfflineUpgradeBtn.disabled = !native || state.monetization.offlinePremium || !rcReady;
+      restorePurchasesBtn.disabled = !native || !rcReady;
+      watchRewardBtn.disabled = !native || adsRemoved;
+      buyHintPackBtn.disabled = !native || !rcReady;
+      buyUndoPackBtn.disabled = !native || !rcReady;
+      themeSelect.disabled = false;
+
+      const credit = state.monetization.rewardCredits;
+      const undoCredit = state.monetization.undoCredits;
+      if (adsRemoved) {
+        setStoreStatus(`Premium active. Hints: ${credit}, Undo credits: ${undoCredit}.`);
+      } else if (!native) {
+        setStoreStatus(`Store is available on Android/iOS builds. Hints: ${credit}, Undo credits: ${undoCredit}.`);
+      } else if (offlinePremium) {
+        setStoreStatus(`Offline Premium unlocked. Hints: ${credit}, Undo credits: ${undoCredit}.`);
+      } else {
+        setStoreStatus(`Store ready. Hints: ${credit}, Undo credits: ${undoCredit}.`);
+      }
+    }
+
+    async function syncEntitlementsFromPurchases() {
+      const { Purchases } = getPlugins();
+      if (!Purchases) return;
+      try {
+        const info = await Purchases.getCustomerInfo();
+        const entitlements = info && info.customerInfo && info.customerInfo.entitlements ? info.customerInfo.entitlements : {};
+        const active = entitlements.active || {};
+        state.monetization.adsRemoved = Boolean(active[MONETIZATION.revenueCat.entitlementRemoveAds]);
+        state.monetization.proPass = Boolean(active[MONETIZATION.revenueCat.entitlementProPass]);
+        state.monetization.offlinePremium =
+          Boolean(active[MONETIZATION.revenueCat.entitlementOfflinePremium]) || state.monetization.proPass;
+      } catch (err) {
+      }
+    }
+
+    async function initializeMonetization() {
+      if (!isNativePlatform()) {
+        state.monetization.storeReady = false;
+        updateStoreUI();
+        return;
+      }
+
+      const { AdMob, Purchases } = getPlugins();
+      let ok = true;
+
+      if (AdMob) {
+        try {
+          await AdMob.initialize();
+          await ensureRewardedListener();
+          await preloadRewardedAd();
+        } catch (err) {
+          ok = false;
+          appendAuditEvent("admob_init_failed", { message: String(err) });
+        }
+      } else {
+        ok = false;
+      }
+
+      if (Purchases) {
+        try {
+          const platform = capacitorPlatform();
+          const apiKey = platform === "android" ? MONETIZATION.revenueCat.androidApiKey : MONETIZATION.revenueCat.iosApiKey;
+          if (!apiKey || apiKey.includes("REVENUECAT_")) {
+            ok = false;
+            setStoreStatus("Set RevenueCat API keys in MONETIZATION config to enable purchases.");
+          } else {
+            await Purchases.configure({ apiKey });
+            await syncEntitlementsFromPurchases();
+          }
+        } catch (err) {
+          ok = false;
+          appendAuditEvent("purchases_init_failed", { message: String(err) });
+        }
+      } else {
+        ok = false;
+      }
+
+      state.monetization.storeReady = ok;
+      if (ok) {
+        const adMode = useAdTestMode() ? "TEST ADS" : "LIVE ADS";
+        setStoreStatus(`Store initialized (${adMode}).`);
+      }
+      updateStoreUI();
+      saveProfile();
+    }
+
+    async function purchaseRemoveAds() {
+      const { Purchases } = getPlugins();
+      if (!Purchases || !state.monetization.storeReady) return;
+      try {
+        setStoreStatus("Processing purchase...");
+        const productId = getRevenueCatProduct("RemoveAds");
+        await Purchases.purchaseProduct({ productIdentifier: productId });
+        await syncEntitlementsFromPurchases();
+        if (state.monetization.adsRemoved) {
+          setStoreStatus("Purchase successful. Ads removed.");
+        } else {
+          setStoreStatus("Purchase completed. Entitlement not active yet, try Restore.");
+        }
+      } catch (err) {
+        setStoreStatus("Purchase canceled or failed.");
+        appendAuditEvent("purchase_failed", { message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function purchaseProPass() {
+      const { Purchases } = getPlugins();
+      if (!Purchases || !state.monetization.storeReady) return;
+      try {
+        setStoreStatus("Processing Pro Pass subscription...");
+        const productId = getRevenueCatProduct("ProPass");
+        await Purchases.purchaseProduct({ productIdentifier: productId });
+        await syncEntitlementsFromPurchases();
+        setStoreStatus(state.monetization.proPass ? "Pro Pass active." : "Subscription purchased. Entitlement pending.");
+      } catch (err) {
+        setStoreStatus("Pro Pass purchase canceled or failed.");
+        appendAuditEvent("purchase_failed", { product: "pro_pass", message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function purchaseOfflineUpgrade() {
+      const { Purchases } = getPlugins();
+      if (!Purchases || !state.monetization.storeReady) return;
+      try {
+        setStoreStatus("Processing Offline Premium...");
+        const productId = getRevenueCatProduct("OfflinePremium");
+        await Purchases.purchaseProduct({ productIdentifier: productId });
+        await syncEntitlementsFromPurchases();
+        setStoreStatus(hasOfflinePremiumEntitlement() ? "Offline Premium unlocked." : "Purchase completed. Try Restore if needed.");
+      } catch (err) {
+        setStoreStatus("Offline Premium purchase canceled or failed.");
+        appendAuditEvent("purchase_failed", { product: "offline_premium", message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function purchaseHintPack() {
+      const { Purchases } = getPlugins();
+      if (!Purchases || !state.monetization.storeReady) return;
+      try {
+        setStoreStatus("Purchasing hint pack...");
+        const productId = getRevenueCatProduct("HintPack");
+        await Purchases.purchaseProduct({ productIdentifier: productId });
+        state.monetization.rewardCredits += HINT_PACK_CREDITS;
+        setStoreStatus(`Hint pack added: +${HINT_PACK_CREDITS} hints.`);
+      } catch (err) {
+        setStoreStatus("Hint pack purchase canceled or failed.");
+        appendAuditEvent("purchase_failed", { product: "hint_pack", message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function purchaseUndoPack() {
+      const { Purchases } = getPlugins();
+      if (!Purchases || !state.monetization.storeReady) return;
+      try {
+        setStoreStatus("Purchasing undo pack...");
+        const productId = getRevenueCatProduct("UndoPack");
+        await Purchases.purchaseProduct({ productIdentifier: productId });
+        state.monetization.undoCredits += UNDO_PACK_CREDITS;
+        setStoreStatus(`Undo pack added: +${UNDO_PACK_CREDITS} undos.`);
+      } catch (err) {
+        setStoreStatus("Undo pack purchase canceled or failed.");
+        appendAuditEvent("purchase_failed", { product: "undo_pack", message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function restorePurchases() {
+      const { Purchases } = getPlugins();
+      if (!Purchases || !state.monetization.storeReady) return;
+      try {
+        setStoreStatus("Restoring purchases...");
+        await Purchases.restorePurchases();
+        await syncEntitlementsFromPurchases();
+        setStoreStatus(state.monetization.adsRemoved ? "Purchases restored. Ads removed." : "No Remove Ads purchase found.");
+      } catch (err) {
+        setStoreStatus("Restore failed.");
+        appendAuditEvent("restore_failed", { message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function showRewardedAd(rewardKind = "hint_credit") {
+      const { AdMob } = getPlugins();
+      if (!AdMob || !isNativePlatform() || hasNoAdsEntitlement()) return;
+      const adId = getAdUnit("rewarded");
+      if (!adId) return;
+      try {
+        await ensureRewardedListener();
+        state.monetization.pendingRewardKind = rewardKind;
+        setStoreStatus(rewardKind === "match_double" ? "Loading rewarded ad for match bonus..." : "Loading rewarded ad...");
+        await AdMob.prepareRewardVideoAd({ adId, isTesting: useAdTestMode() });
+        await AdMob.showRewardVideoAd();
+        appendAuditEvent("rewarded_shown", { rewardKind });
+        await preloadRewardedAd();
+      } catch (err) {
+        state.monetization.pendingRewardKind = "";
+        setStoreStatus("Rewarded ad unavailable right now.");
+        appendAuditEvent("rewarded_failed", { message: String(err) });
+      }
+      updateStoreUI();
+      saveProfile();
+      render();
+    }
+
+    async function maybeShowInterstitialAd(trigger) {
+      if (!isNativePlatform() || hasNoAdsEntitlement()) return;
+      if (!state.monetization.storeReady) return;
+      if (state.stats.totalGames < 2 || state.stats.totalGames % 2 !== 0) return;
+
+      const { AdMob } = getPlugins();
+      if (!AdMob) return;
+      const adId = getAdUnit("interstitial");
+      if (!adId) return;
+      try {
+        await AdMob.prepareInterstitial({ adId, isTesting: useAdTestMode() });
+        await AdMob.showInterstitial();
+        appendAuditEvent("interstitial_shown", { trigger, totalGames: state.stats.totalGames });
+      } catch (err) {
+        appendAuditEvent("interstitial_failed", { message: String(err) });
+      }
+    }
+
+    function toSafeCount(value) {
+      return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+    }
+
+    function normalizeStats(raw) {
+      const input = raw || {};
+      return {
+        totalGames: toSafeCount(input.totalGames),
+        redWins: toSafeCount(input.redWins),
+        blackWins: toSafeCount(input.blackWins),
+        draws: toSafeCount(input.draws),
+        aiGames: toSafeCount(input.aiGames),
+        pvpGames: toSafeCount(input.pvpGames),
+        aiRating: Math.max(600, toSafeCount(input.aiRating) || 1200),
+        aiWins: toSafeCount(input.aiWins),
+        aiLosses: toSafeCount(input.aiLosses),
+        aiDraws: toSafeCount(input.aiDraws),
+        currentStreak: toSafeCount(input.currentStreak),
+        bestStreak: toSafeCount(input.bestStreak)
+      };
+    }
+
+    function nextGameId() {
+      return `GM-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function appendAuditEvent(type, detail = {}) {
+      state.auditTrail.push({
+        at: new Date().toISOString(),
+        type,
+        detail
+      });
+      if (state.auditTrail.length > AUDIT_LIMIT) {
+        state.auditTrail.splice(0, state.auditTrail.length - AUDIT_LIMIT);
+      }
+    }
+
+    function startActiveGameSession() {
+      state.activeGame = {
+        id: nextGameId(),
+        startedAt: Date.now(),
+        mode: state.mode,
+        variant: state.variant,
+        humanColor: state.humanColor,
+        aiLevel: state.mode === "ai" ? state.aiLevel : null,
+        aiSpeed: state.mode === "ai" ? state.aiSpeed : null,
+        timeControl: state.timeControl,
+        forcedCaptures: state.rules.forcedCaptures,
+        illegalMovePolicy: state.rules.illegalMovePolicy,
+        allowMenBackwardCapture: state.rules.allowMenBackwardCapture,
+        flyingKings: state.rules.flyingKings
+      };
+      state.auditTrail = [];
+      appendAuditEvent("game_started", {
+        mode: state.mode,
+        variant: state.variant,
+        humanColor: state.humanColor,
+        aiLevel: state.aiLevel,
+        aiSpeed: state.aiSpeed,
+        timeControl: state.timeControl,
+        forcedCaptures: state.rules.forcedCaptures,
+        illegalMovePolicy: state.rules.illegalMovePolicy,
+        allowMenBackwardCapture: state.rules.allowMenBackwardCapture,
+        flyingKings: state.rules.flyingKings
+      });
+    }
+
+    function buildRuntimeSnapshot() {
+      return {
+        mode: state.mode,
+        humanColor: state.humanColor,
+        aiLevel: state.aiLevel,
+        aiSpeed: state.aiSpeed,
+        timeControl: state.timeControl,
+        theme: state.theme,
+        variant: state.variant,
+        rules: { ...state.rules },
+        flip: state.flip,
+        coins: state.coins,
+        monetization: { ...state.monetization },
+        matchReward: { ...state.matchReward },
+        board: state.board.slice(),
+        turn: state.turn,
+        selected: state.selected,
+        forcedPiece: state.forcedPiece,
+        gameOver: state.gameOver,
+        resultRecorded: state.resultRecorded,
+        sinceProgress: state.sinceProgress,
+        positionCounts: { ...state.positionCounts },
+        moveLog: state.moveLog.slice(),
+        moveIndex: state.moveIndex,
+        lastMove: state.lastMove ? { ...state.lastMove } : null,
+        hintMove: state.hintMove ? { ...state.hintMove } : null,
+        hintsRemaining: state.hintsRemaining,
+        undosRemaining: state.undosRemaining,
+        timeoutLoser: state.timeoutLoser,
+        clocks: { ...state.clocks },
+        multiplayerSync: buildMultiplayerSyncState(),
+        online: {
+          activeMatchId: state.online.activeMatchId,
+          color: state.online.color,
+          lastRevision: state.online.lastRevision
+        },
+        activeGame: state.activeGame ? { ...state.activeGame } : null,
+        auditTrail: state.auditTrail.slice()
+      };
+    }
+
+    function restoreRuntimeSnapshot(snapshot) {
+      if (!snapshot || !Array.isArray(snapshot.board) || snapshot.board.length !== SIZE * SIZE) {
+        return false;
+      }
+
+      state.mode = snapshot.mode === "ai" ? "ai" : snapshot.mode === "online" ? "online" : "pvp";
+      state.humanColor = snapshot.humanColor === BLACK ? BLACK : RED;
+      state.aiColor = opposite(state.humanColor);
+      state.aiLevel = AI_LEVELS[snapshot.aiLevel] ? snapshot.aiLevel : "soft";
+      state.aiSpeed = AI_SPEEDS[snapshot.aiSpeed] ? snapshot.aiSpeed : "verySlow";
+      state.timeControl = TIME_CONTROLS[snapshot.timeControl] ? snapshot.timeControl : "rapid120";
+      state.theme = THEMES[snapshot.theme] ? snapshot.theme : "classic";
+      state.variant = normalizeVariant(snapshot.variant);
+      state.rules.forcedCaptures = snapshot.rules && snapshot.rules.forcedCaptures === false ? false : true;
+      state.rules.illegalMovePolicy = snapshot.rules && snapshot.rules.illegalMovePolicy === "penalty" ? "penalty" : "strict";
+      state.rules.allowMenBackwardCapture = snapshot.rules && snapshot.rules.allowMenBackwardCapture === true
+        ? true
+        : state.variant === "russia";
+      state.rules.flyingKings = snapshot.rules && snapshot.rules.flyingKings === true
+        ? true
+        : state.variant === "russia" || state.variant === "nigeria" || state.variant === "african";
+      state.flip = Boolean(snapshot.flip);
+      state.monetization = {
+        adsRemoved: Boolean(snapshot.monetization && snapshot.monetization.adsRemoved),
+        proPass: Boolean(snapshot.monetization && snapshot.monetization.proPass),
+        offlinePremium: Boolean(snapshot.monetization && snapshot.monetization.offlinePremium),
+        rewardCredits: toSafeCount(snapshot.monetization && snapshot.monetization.rewardCredits),
+        undoCredits: toSafeCount(snapshot.monetization && snapshot.monetization.undoCredits),
+        pendingRewardKind: "",
+        rewardedListenerReady: false,
+        storeReady: false,
+        storeStatus: "Store not initialized yet."
+      };
+      if (state.monetization.proPass) {
+        state.monetization.offlinePremium = true;
+      }
+
+      modeSelect.value = state.mode;
+      sideSelect.value = state.humanColor === BLACK ? "black" : "red";
+      depthSelect.value = state.aiLevel;
+      speedSelect.value = state.aiSpeed;
+      paceSelect.value = state.timeControl;
+      captureRuleSelect.value = state.rules.forcedCaptures ? "forced" : "casual";
+      illegalMoveSelect.value = state.rules.illegalMovePolicy;
+
+      state.board = snapshot.board.slice();
+      state.coins = toSafeCount(snapshot.coins);
+      state.matchReward = {
+        matchId: snapshot.matchReward && snapshot.matchReward.matchId ? String(snapshot.matchReward.matchId) : "",
+        baseCoins: toSafeCount(snapshot.matchReward && snapshot.matchReward.baseCoins),
+        bonusCoins: toSafeCount(snapshot.matchReward && snapshot.matchReward.bonusCoins),
+        bonusClaimed: Boolean(snapshot.matchReward && snapshot.matchReward.bonusClaimed)
+      };
+      state.turn = snapshot.turn === BLACK ? BLACK : RED;
+      state.selected = Number.isInteger(snapshot.selected) ? snapshot.selected : null;
+      state.forcedPiece = Number.isInteger(snapshot.forcedPiece) ? snapshot.forcedPiece : null;
+      state.gameOver = Boolean(snapshot.gameOver);
+      state.resultRecorded = Boolean(snapshot.resultRecorded);
+      state.sinceProgress = toSafeCount(snapshot.sinceProgress);
+      state.positionCounts = snapshot.positionCounts && typeof snapshot.positionCounts === "object" ? { ...snapshot.positionCounts } : {};
+      state.moveLog = Array.isArray(snapshot.moveLog) ? snapshot.moveLog.slice() : [];
+      state.moveIndex = toSafeCount(snapshot.moveIndex);
+      state.lastMove = snapshot.lastMove && typeof snapshot.lastMove === "object" ? { ...snapshot.lastMove } : null;
+      state.hintMove = snapshot.hintMove && typeof snapshot.hintMove === "object" ? { ...snapshot.hintMove } : null;
+      state.hintsRemaining = Number.isFinite(snapshot.hintsRemaining) ? toSafeCount(snapshot.hintsRemaining) : FREE_HINTS_PER_GAME;
+      state.undosRemaining = Number.isFinite(snapshot.undosRemaining) ? toSafeCount(snapshot.undosRemaining) : FREE_UNDOS_PER_GAME;
+      state.timeoutLoser = snapshot.timeoutLoser === RED || snapshot.timeoutLoser === BLACK ? snapshot.timeoutLoser : null;
+      state.clocks.redMs = toSafeCount(snapshot.clocks && snapshot.clocks.redMs);
+      state.clocks.blackMs = toSafeCount(snapshot.clocks && snapshot.clocks.blackMs);
+      state.clocks.armed = Boolean(snapshot.clocks && snapshot.clocks.armed);
+      state.clocks.lastTickAt = state.clocks.armed ? Date.now() : 0;
+      state.online.activeMatchId = snapshot.online && snapshot.online.activeMatchId ? String(snapshot.online.activeMatchId) : "";
+      state.online.color = snapshot.online && (snapshot.online.color === RED || snapshot.online.color === BLACK)
+        ? snapshot.online.color
+        : null;
+      state.online.lastRevision = toSafeCount(snapshot.online && snapshot.online.lastRevision);
+      state.activeGame = snapshot.activeGame && typeof snapshot.activeGame === "object" ? { ...snapshot.activeGame } : null;
+      state.auditTrail = Array.isArray(snapshot.auditTrail) ? snapshot.auditTrail.slice(0, AUDIT_LIMIT) : [];
+      state.history = [];
+      state.thinking = false;
+      applyTheme(state.theme, false);
+      applyVariant(state.variant, false);
+
+      const timed = Boolean(getTimeControlProfile().initialMs);
+      if (timed && state.clocks.redMs === 0 && state.clocks.blackMs === 0 && !state.timeoutLoser) {
+        const ms = getTimeControlProfile().initialMs;
+        state.clocks.redMs = ms;
+        state.clocks.blackMs = ms;
+        state.clocks.armed = false;
+      }
+      return true;
+    }
+
+    function saveProfile() {
+      try {
+        const payload = {
+          version: 2,
+          developer: "FreNiMi",
+          savedAt: new Date().toISOString(),
+          profile: {
+            playerNames: state.playerNames,
+            scores: state.scores,
+            coins: state.coins,
+            monetization: {
+              adsRemoved: state.monetization.adsRemoved,
+              proPass: state.monetization.proPass,
+              offlinePremium: state.monetization.offlinePremium,
+              rewardCredits: state.monetization.rewardCredits,
+              undoCredits: state.monetization.undoCredits
+            },
+            online: {
+              apiBase: state.online.apiBase,
+              token: state.online.token,
+              playerId: state.online.playerId,
+              playerName: state.online.playerName,
+              playerRating: state.online.playerRating
+            }
+          },
+          stats: state.stats,
+          matchArchive: state.matchArchive.slice(0, ARCHIVE_LIMIT),
+          runtime: buildRuntimeSnapshot()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      } catch (err) {
+      }
+    }
+
+    function loadProfile() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          const legacyRaw = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (!legacyRaw) return null;
+          const legacy = JSON.parse(legacyRaw);
+          state.playerNames.red = sanitizeName(legacy?.playerNames?.red, "Red Player");
+          state.playerNames.black = sanitizeName(legacy?.playerNames?.black, "Black Player");
+          state.scores.red = toSafeCount(legacy?.scores?.red);
+          state.scores.black = toSafeCount(legacy?.scores?.black);
+          return null;
+        }
+
+        const data = JSON.parse(raw);
+        const profile = data?.profile || {};
+        state.playerNames.red = sanitizeName(profile?.playerNames?.red, "Red Player");
+        state.playerNames.black = sanitizeName(profile?.playerNames?.black, "Black Player");
+        state.scores.red = toSafeCount(profile?.scores?.red);
+        state.scores.black = toSafeCount(profile?.scores?.black);
+        state.coins = toSafeCount(profile?.coins);
+        state.monetization.adsRemoved = Boolean(profile?.monetization?.adsRemoved);
+        state.monetization.proPass = Boolean(profile?.monetization?.proPass);
+        state.monetization.offlinePremium = Boolean(profile?.monetization?.offlinePremium);
+        state.monetization.rewardCredits = toSafeCount(profile?.monetization?.rewardCredits);
+        state.monetization.undoCredits = toSafeCount(profile?.monetization?.undoCredits);
+        state.monetization.pendingRewardKind = "";
+        state.monetization.rewardedListenerReady = false;
+        state.online.apiBase = normalizeOnlineApiBase(profile?.online?.apiBase || defaultOnlineApiBase());
+        state.online.token = String(profile?.online?.token || "");
+        state.online.playerId = String(profile?.online?.playerId || "");
+        state.online.playerName = sanitizeName(profile?.online?.playerName, "Player");
+        state.online.playerRating = Math.max(600, toSafeCount(profile?.online?.playerRating) || 1200);
+        state.online.connected = Boolean(state.online.token);
+        state.stats = normalizeStats(data?.stats);
+        state.matchArchive = Array.isArray(data?.matchArchive) ? data.matchArchive.slice(0, ARCHIVE_LIMIT) : [];
+        return data?.runtime || null;
+      } catch (err) {
+        return null;
+      }
+    }
+
+    function syncNameInputs() {
+      redNameInput.value = state.playerNames.red;
+      blackNameInput.value = state.playerNames.black;
+      onlineNameInput.value = state.online.playerName || onlineNameInput.value || "";
+      onlineApiInput.value = state.online.apiBase || normalizeOnlineApiBase(onlineApiInput.value);
+      if (state.mode === "online") {
+        redNameLabel.textContent = "Online Red";
+        blackNameLabel.textContent = "Online Black";
+      } else if (state.mode !== "ai") {
+        redNameLabel.textContent = "Red Player Name";
+        blackNameLabel.textContent = "Black Player Name";
+      } else if (state.aiColor === RED) {
+        redNameLabel.textContent = "Computer Name (Red)";
+        blackNameLabel.textContent = "Your Name (Black)";
+      } else {
+        redNameLabel.textContent = "Your Name (Red)";
+        blackNameLabel.textContent = "Computer Name (Black)";
+      }
+    }
+
+    function updateScoreUI() {
+      redScoreEl.textContent = `${sideName(RED)}: ${state.scores.red}`;
+      blackScoreEl.textContent = `${sideName(BLACK)}: ${state.scores.black}`;
+      if (coinWalletEl) {
+        coinWalletEl.textContent = `Coins: ${state.coins}`;
+      }
+      if (walletTopEl) {
+        walletTopEl.textContent = `Wallet: ${state.coins} coins`;
+      }
+    }
+
+    function updateAnalyticsUI() {
+      totalGamesStatEl.textContent = `Total Games: ${state.stats.totalGames}`;
+      drawsStatEl.textContent = `Draws: ${state.stats.draws}`;
+      redWinsStatEl.textContent = `Red Wins: ${state.stats.redWins}`;
+      blackWinsStatEl.textContent = `Black Wins: ${state.stats.blackWins}`;
+      aiGamesStatEl.textContent = `AI Games: ${state.stats.aiGames}`;
+      pvpGamesStatEl.textContent = `PvP Games: ${state.stats.pvpGames}`;
+      aiRatingStatEl.textContent = `AI Rating: ${state.stats.aiRating}`;
+      bestStreakStatEl.textContent = `Best Win Streak: ${state.stats.bestStreak}`;
+    }
+
+    function hideGameOverModal() {
+      gameOverModalEl.classList.add("hidden");
+      gameOverModalEl.setAttribute("aria-hidden", "true");
+    }
+
+    function showGameOverModal(result) {
+      gameOverTitleEl.textContent = "Game Over";
+      if (state.mode === "online") {
+        if (result.type === "draw") {
+          gameOverTextEl.textContent = result.message || "Online match ended in draw.";
+        } else {
+          const reason = result.reason ? ` ${result.reason}` : "";
+          gameOverTextEl.textContent = `${sideName(result.winner)} won the online match.${reason}`;
+        }
+      } else if (result.type === "draw") {
+        gameOverTextEl.textContent = `${result.message} Score remains ${state.scores.red} - ${state.scores.black}.`;
+      } else {
+        const reason = result.reason ? ` ${result.reason}` : "";
+        const ratingNote = state.mode === "ai" ? ` AI rating: ${state.stats.aiRating}.` : "";
+        gameOverTextEl.textContent = `${sideName(result.winner)} wins this round.${reason} Score is now ${state.scores.red} - ${state.scores.black}.${ratingNote}`;
+      }
+      renderMatchRewardUI();
+      gameOverModalEl.classList.remove("hidden");
+      gameOverModalEl.setAttribute("aria-hidden", "false");
+    }
+
+    function finalizeCompletedGame(result) {
+      if (!state.activeGame) {
+        startActiveGameSession();
+      }
+
+      state.stats.totalGames += 1;
+      if (state.mode === "ai") {
+        state.stats.aiGames += 1;
+      } else {
+        state.stats.pvpGames += 1;
+      }
+
+      if (result.type === "draw") {
+        state.stats.draws += 1;
+      } else if (result.winner === RED) {
+        state.stats.redWins += 1;
+      } else {
+        state.stats.blackWins += 1;
+      }
+      updateAiRatingProgress(result);
+      const baseCoins = calculateBaseMatchCoins(result);
+      const bonusCoins = calculateRewardedBonus(baseCoins);
+      state.coins += baseCoins;
+
+      const durationSec = Math.max(0, Math.round((Date.now() - state.activeGame.startedAt) / 1000));
+      const matchId = state.activeGame.id;
+      const completed = {
+        id: matchId,
+        completedAt: new Date().toISOString(),
+        result,
+        mode: state.mode,
+        variant: state.variant,
+        moves: state.moveIndex,
+        durationSec,
+        players: {
+          red: state.playerNames.red,
+          black: state.playerNames.black
+        },
+        scoreAfter: {
+          red: state.scores.red,
+          black: state.scores.black
+        },
+        ai: state.mode === "ai" ? {
+          humanColor: state.humanColor,
+          aiLevel: state.aiLevel,
+          aiSpeed: state.aiSpeed
+        } : null,
+        rules: {
+          forcedCaptures: state.rules.forcedCaptures,
+          illegalMovePolicy: state.rules.illegalMovePolicy,
+          allowMenBackwardCapture: state.rules.allowMenBackwardCapture,
+          flyingKings: state.rules.flyingKings
+        },
+        timeControl: state.timeControl,
+        hints: {
+          freeRemaining: state.hintsRemaining,
+          rewardRemaining: state.monetization.rewardCredits
+        },
+        auditTrail: state.auditTrail.slice(0, AUDIT_LIMIT)
+      };
+
+      state.matchArchive.unshift(completed);
+      if (state.matchArchive.length > ARCHIVE_LIMIT) {
+        state.matchArchive.length = ARCHIVE_LIMIT;
+      }
+      state.matchReward = {
+        matchId,
+        baseCoins,
+        bonusCoins,
+        bonusClaimed: false
+      };
+    }
+
+    function exportEnterpriseData() {
+      const payload = {
+        version: 2,
+        developer: "FreNiMi",
+        exportedAt: new Date().toISOString(),
+        profile: {
+          playerNames: state.playerNames,
+          scores: state.scores,
+          coins: state.coins,
+          monetization: {
+            adsRemoved: state.monetization.adsRemoved,
+            proPass: state.monetization.proPass,
+            offlinePremium: state.monetization.offlinePremium,
+            rewardCredits: state.monetization.rewardCredits,
+            undoCredits: state.monetization.undoCredits
+          },
+          online: {
+            apiBase: state.online.apiBase,
+            token: state.online.token,
+            playerId: state.online.playerId,
+            playerName: state.online.playerName,
+            playerRating: state.online.playerRating
+          }
+        },
+        stats: state.stats,
+        matchArchive: state.matchArchive.slice(0, ARCHIVE_LIMIT),
+        runtime: buildRuntimeSnapshot()
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `frenimi-checkers-enterprise-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importEnterpriseData(payload) {
+      if (!payload || typeof payload !== "object") {
+        throw new Error("Invalid data file.");
+      }
+
+      const profile = payload.profile || {};
+      state.playerNames.red = sanitizeName(profile?.playerNames?.red, "Red Player");
+      state.playerNames.black = sanitizeName(profile?.playerNames?.black, "Black Player");
+      state.scores.red = toSafeCount(profile?.scores?.red);
+      state.scores.black = toSafeCount(profile?.scores?.black);
+      state.coins = toSafeCount(profile?.coins);
+      state.monetization.adsRemoved = Boolean(profile?.monetization?.adsRemoved);
+      state.monetization.proPass = Boolean(profile?.monetization?.proPass);
+      state.monetization.offlinePremium = Boolean(profile?.monetization?.offlinePremium);
+      state.monetization.rewardCredits = toSafeCount(profile?.monetization?.rewardCredits);
+      state.monetization.undoCredits = toSafeCount(profile?.monetization?.undoCredits);
+      state.monetization.pendingRewardKind = "";
+      state.monetization.rewardedListenerReady = false;
+      state.online.apiBase = normalizeOnlineApiBase(profile?.online?.apiBase || defaultOnlineApiBase());
+      state.online.token = String(profile?.online?.token || "");
+      state.online.playerId = String(profile?.online?.playerId || "");
+      state.online.playerName = sanitizeName(profile?.online?.playerName, "Player");
+      state.online.playerRating = Math.max(600, toSafeCount(profile?.online?.playerRating) || 1200);
+      state.online.connected = Boolean(state.online.token);
+      state.stats = normalizeStats(payload.stats);
+      state.matchArchive = Array.isArray(payload.matchArchive) ? payload.matchArchive.slice(0, ARCHIVE_LIMIT) : [];
+
+      const restored = restoreRuntimeSnapshot(payload.runtime);
+      applyModeSettings();
+      maybeAssignComputerName();
+      syncNameInputs();
+      saveProfile();
+      if (!restored) {
+        resetGame();
+      } else {
+        render();
+      }
+    }
+
+    function currentPositionKey() {
+      return `${state.turn}|${state.board.map((cell) => cell || ".").join("")}`;
+    }
+
+    function resetPositionTracking() {
+      state.sinceProgress = 0;
+      state.positionCounts = {};
+      const key = currentPositionKey();
+      state.positionCounts[key] = 1;
+    }
+
+    function trackPosition() {
+      const key = currentPositionKey();
+      state.positionCounts[key] = (state.positionCounts[key] || 0) + 1;
+    }
+
+    function getDrawReason() {
+      if (state.sinceProgress >= DRAW_NON_PROGRESS_LIMIT) {
+        return "Draw by no capture or king promotion for 40 moves each.";
+      }
+      const currentSeen = state.positionCounts[currentPositionKey()] || 0;
+      if (currentSeen >= 3) {
+        return "Draw by threefold repetition.";
+      }
+      return null;
+    }
+
+    function visualToActual(vRow, vCol) {
+      if (!state.flip) return { row: vRow, col: vCol };
+      return { row: SIZE - 1 - vRow, col: SIZE - 1 - vCol };
+    }
+
+    function maybePromote(piece, destination) {
+      const row = rc(destination).row;
+      if (piece === "r" && row === 0) return "R";
+      if (piece === "b" && row === SIZE - 1) return "B";
+      return piece;
+    }
+
+    function createBoard() {
+      const board = Array(SIZE * SIZE).fill(null);
+      for (let row = 0; row < SIZE; row++) {
+        for (let col = 0; col < SIZE; col++) {
+          if (!isDark(row, col)) continue;
+          if (row <= 2) board[idx(row, col)] = "b";
+          if (row >= 5) board[idx(row, col)] = "r";
+        }
+      }
+      return board;
+    }
+
+    function getMovesForPiece(board, from, turn, forceCapture) {
+      const piece = board[from];
+      if (!piece || owner(piece) !== turn) return [];
+
+      const fromRC = rc(from);
+      if (isKing(piece) && state.rules.flyingKings) {
+        const longMoves = [];
+        for (const dr of [-1, 1]) {
+          for (const dc of [-1, 1]) {
+            let row = fromRC.row + dr;
+            let col = fromRC.col + dc;
+            let captured = null;
+            while (inBounds(row, col)) {
+              const step = idx(row, col);
+              const occupant = board[step];
+
+              if (!captured) {
+                if (!occupant) {
+                  if (!forceCapture) longMoves.push({ from, to: step, capture: null });
+                } else if (owner(occupant) === turn) {
+                  break;
+                } else {
+                  captured = step;
+                }
+              } else {
+                if (occupant) break;
+                longMoves.push({ from, to: step, capture: captured });
+              }
+
+              row += dr;
+              col += dc;
+            }
+          }
+        }
+        return forceCapture ? longMoves.filter((m) => m.capture !== null) : longMoves;
+      }
+
+      const dirs = directions(piece);
+      const captureDirs = isKing(piece) || state.rules.allowMenBackwardCapture ? [-1, 1] : dirs;
+      const moves = [];
+
+      for (const dr of captureDirs) {
+        for (const dc of [-1, 1]) {
+          const row1 = fromRC.row + dr;
+          const col1 = fromRC.col + dc;
+          if (!inBounds(row1, col1)) continue;
+
+          const step1 = idx(row1, col1);
+          const piece1 = board[step1];
+
+          if (!forceCapture && !piece1 && dirs.includes(dr)) {
+            moves.push({ from, to: step1, capture: null });
+          }
+
+          if (piece1 && owner(piece1) !== turn) {
+            const row2 = fromRC.row + dr * 2;
+            const col2 = fromRC.col + dc * 2;
+            if (!inBounds(row2, col2)) continue;
+            const step2 = idx(row2, col2);
+            if (!board[step2]) {
+              moves.push({ from, to: step2, capture: step1 });
+            }
+          }
+        }
+      }
+
+      return forceCapture ? moves.filter((m) => m.capture !== null) : moves;
+    }
+
+    function getLegalAtomicMoves(board, turn, forcedPiece = null, enforceCaptureRule = state.rules.forcedCaptures) {
+      const all = [];
+      let hasCapture = false;
+
+      for (let i = 0; i < board.length; i++) {
+        const piece = board[i];
+        if (!piece || owner(piece) !== turn) continue;
+        if (forcedPiece !== null && i !== forcedPiece) continue;
+        const pieceMoves = getMovesForPiece(board, i, turn, false);
+        if (pieceMoves.some((m) => m.capture !== null)) hasCapture = true;
+        all.push(...pieceMoves);
+      }
+
+      if (hasCapture && enforceCaptureRule) return all.filter((m) => m.capture !== null);
+      return all;
+    }
+
+    function applyAtomicMoveOnBoard(board, move) {
+      const moving = board[move.from];
+      board[move.from] = null;
+      const promotedPiece = maybePromote(moving, move.to);
+      board[move.to] = promotedPiece;
+      if (move.capture !== null) board[move.capture] = null;
+      return {
+        movedPiece: moving,
+        promotedPiece,
+        promoted: moving !== promotedPiece
+      };
+    }
+
+    function countPieces(board) {
+      const counts = {
+        red: 0,
+        black: 0,
+        redKings: 0,
+        blackKings: 0
+      };
+
+      for (const piece of board) {
+        if (!piece) continue;
+        if (owner(piece) === RED) {
+          counts.red++;
+          if (isKing(piece)) counts.redKings++;
+        } else {
+          counts.black++;
+          if (isKing(piece)) counts.blackKings++;
+        }
+      }
+      return counts;
+    }
+
+    function captureSequences(board, turn, fromIndex, prefix) {
+      const captures = getMovesForPiece(board, fromIndex, turn, true);
+      if (captures.length === 0) {
+        return [{ sequence: prefix, boardAfter: board }];
+      }
+
+      const variants = [];
+      for (const move of captures) {
+        const b2 = board.slice();
+        applyAtomicMoveOnBoard(b2, move);
+        variants.push(...captureSequences(b2, turn, move.to, [...prefix, move]));
+      }
+      return variants;
+    }
+
+    function generateActions(board, turn) {
+      const legal = getLegalAtomicMoves(board, turn, null);
+      if (legal.length === 0) return [];
+
+      const captureMode = legal[0].capture !== null;
+      const actions = [];
+
+      if (!captureMode) {
+        for (const move of legal) {
+          const nextBoard = board.slice();
+          applyAtomicMoveOnBoard(nextBoard, move);
+          actions.push({ sequence: [move], boardAfter: nextBoard });
+        }
+        return actions;
+      }
+
+      for (const move of legal) {
+        const b1 = board.slice();
+        applyAtomicMoveOnBoard(b1, move);
+        actions.push(...captureSequences(b1, turn, move.to, [move]));
+      }
+      return actions;
+    }
+
+    function getWinner(board, turn) {
+      const counts = countPieces(board);
+      if (counts.red === 0) return BLACK;
+      if (counts.black === 0) return RED;
+      const moves = generateActions(board, turn);
+      if (moves.length === 0) return opposite(turn);
+      return null;
+    }
+
+    function evaluate(board, aiColor) {
+      let score = 0;
+      for (let i = 0; i < board.length; i++) {
+        const piece = board[i];
+        if (!piece) continue;
+        const o = owner(piece);
+        const s = o === aiColor ? 1 : -1;
+        const r = rc(i).row;
+        const c = rc(i).col;
+
+        if (isKing(piece)) {
+          score += s * PIECE_WEIGHT.king;
+        } else {
+          score += s * PIECE_WEIGHT.man;
+          const advance = o === RED ? SIZE - 1 - r : r;
+          score += s * advance * 2;
+        }
+
+        if (r >= 2 && r <= 5 && c >= 2 && c <= 5) {
+          score += s * 6;
+        }
+      }
+
+      const aiMoves = getLegalAtomicMoves(board, aiColor, null).length;
+      const enemy = opposite(aiColor);
+      const enemyMoves = getLegalAtomicMoves(board, enemy, null).length;
+      score += (aiMoves - enemyMoves) * 3;
+
+      return score;
+    }
+
+    function minimax(board, turn, depth, alpha, beta, aiColor) {
+      const winner = getWinner(board, turn);
+      if (winner) {
+        if (winner === aiColor) return { score: 100000 + depth };
+        return { score: -100000 - depth };
+      }
+
+      if (depth === 0) {
+        return { score: evaluate(board, aiColor) };
+      }
+
+      const actions = generateActions(board, turn);
+      const maximizing = turn === aiColor;
+      let bestAction = null;
+
+      if (maximizing) {
+        let bestScore = -Infinity;
+        for (const action of actions) {
+          const out = minimax(action.boardAfter, opposite(turn), depth - 1, alpha, beta, aiColor);
+          if (out.score > bestScore) {
+            bestScore = out.score;
+            bestAction = action;
+          }
+          alpha = Math.max(alpha, bestScore);
+          if (beta <= alpha) break;
+        }
+        return { score: bestScore, action: bestAction };
+      }
+
+      let bestScore = Infinity;
+      for (const action of actions) {
+        const out = minimax(action.boardAfter, opposite(turn), depth - 1, alpha, beta, aiColor);
+        if (out.score < bestScore) {
+          bestScore = out.score;
+          bestAction = action;
+        }
+        beta = Math.min(beta, bestScore);
+        if (beta <= alpha) break;
+      }
+      return { score: bestScore, action: bestAction };
+    }
+
+    function getAIProfile() {
+      return AI_LEVELS[state.aiLevel] || AI_LEVELS.soft;
+    }
+
+    function getAISpeedProfile() {
+      return AI_SPEEDS[state.aiSpeed] || AI_SPEEDS.verySlow;
+    }
+
+    function chooseAIAction() {
+      if (canUseCoreEngine() && Core && typeof Core.chooseAction === "function") {
+        return Core.chooseAction({
+          board: state.board,
+          turn: state.turn,
+          aiColor: state.aiColor,
+          level: state.aiLevel,
+          enforceCaptureRule: state.rules.forcedCaptures
+        });
+      }
+
+      const actions = generateActions(state.board, state.turn);
+      if (actions.length === 0) return null;
+      if (actions.length === 1) return actions[0];
+
+      const profile = getAIProfile();
+      const scored = actions.map((action) => {
+        const out = minimax(action.boardAfter, opposite(state.turn), profile.depth - 1, -Infinity, Infinity, state.aiColor);
+        return { action, score: out.score };
+      });
+      scored.sort((a, b) => b.score - a.score);
+
+      if (profile.mistakeChance > 0 && Math.random() < profile.mistakeChance) {
+        const pool = scored.slice(1, Math.min(scored.length, profile.topPool + 2));
+        if (pool.length > 0) {
+          return pool[Math.floor(Math.random() * pool.length)].action;
+        }
+      }
+
+      const top = scored.slice(0, Math.min(profile.topPool, scored.length));
+      return top[Math.floor(Math.random() * top.length)].action;
+    }
+
+    function snapshotState() {
+      return {
+        board: state.board.slice(),
+        turn: state.turn,
+        selected: state.selected,
+        forcedPiece: state.forcedPiece,
+        gameOver: state.gameOver,
+        sinceProgress: state.sinceProgress,
+        positionCounts: { ...state.positionCounts },
+        moveLog: state.moveLog.slice(),
+        moveIndex: state.moveIndex,
+        lastMove: state.lastMove ? { ...state.lastMove } : null,
+        hintMove: state.hintMove ? { ...state.hintMove } : null,
+        hintsRemaining: state.hintsRemaining,
+        timeoutLoser: state.timeoutLoser,
+        clocks: { ...state.clocks }
+      };
+    }
+
+    function restoreSnapshot(snap) {
+      state.board = snap.board.slice();
+      state.turn = snap.turn;
+      state.selected = snap.selected;
+      state.forcedPiece = snap.forcedPiece;
+      state.gameOver = snap.gameOver;
+      state.sinceProgress = snap.sinceProgress || 0;
+      state.positionCounts = { ...(snap.positionCounts || {}) };
+      state.moveLog = snap.moveLog.slice();
+      state.moveIndex = snap.moveIndex;
+      state.lastMove = snap.lastMove ? { ...snap.lastMove } : null;
+      state.hintMove = snap.hintMove ? { ...snap.hintMove } : null;
+      state.hintsRemaining = Number.isFinite(snap.hintsRemaining) ? toSafeCount(snap.hintsRemaining) : FREE_HINTS_PER_GAME;
+      state.timeoutLoser = snap.timeoutLoser === RED || snap.timeoutLoser === BLACK ? snap.timeoutLoser : null;
+      state.clocks.redMs = toSafeCount(snap.clocks && snap.clocks.redMs);
+      state.clocks.blackMs = toSafeCount(snap.clocks && snap.clocks.blackMs);
+      state.clocks.armed = Boolean(snap.clocks && snap.clocks.armed);
+      state.clocks.lastTickAt = state.clocks.armed ? Date.now() : 0;
+    }
+
+    function pushHistory() {
+      state.history.push(snapshotState());
+      if (state.history.length > 500) {
+        state.history.shift();
+      }
+    }
+
+    function logMove(movingPiece, move, promoted) {
+      state.moveIndex += 1;
+      const side = sideName(owner(movingPiece));
+      const sep = move.capture !== null ? "x" : "-";
+      const promo = promoted ? " (K)" : "";
+      state.moveLog.push(`${state.moveIndex}. ${side}: ${coord(move.from)}${sep}${coord(move.to)}${promo}`);
+    }
+
+    function applyAtomicMoveToState(move) {
+      pushHistory();
+
+      const movingPiece = state.board[move.from];
+      const timedMatch = Boolean(getTimeControlProfile().initialMs) && state.mode !== "online";
+      if (timedMatch && !state.clocks.armed) {
+        state.clocks.armed = true;
+        appendAuditEvent("clock_started", { by: owner(movingPiece) });
+      }
+      const outcome = applyAtomicMoveOnBoard(state.board, move);
+      const madeProgress = move.capture !== null || outcome.promoted;
+      state.sinceProgress = madeProgress ? 0 : state.sinceProgress + 1;
+      state.lastMove = { from: move.from, to: move.to };
+      state.hintMove = null;
+      logMove(movingPiece, move, outcome.promoted);
+      appendAuditEvent("move", {
+        by: owner(movingPiece),
+        from: coord(move.from),
+        to: coord(move.to),
+        capture: move.capture !== null ? coord(move.capture) : null,
+        promoted: outcome.promoted
+      });
+      state.selected = move.to;
+
+      if (move.capture !== null && state.rules.forcedCaptures) {
+        const continueCaps = getMovesForPiece(state.board, move.to, state.turn, true);
+        if (continueCaps.length > 0) {
+          state.forcedPiece = move.to;
+          if (timedMatch && state.clocks.armed) {
+            ensureClockTimer();
+          }
+          return;
+        }
+      }
+
+      state.forcedPiece = null;
+      state.selected = null;
+      state.turn = opposite(state.turn);
+      if (timedMatch && state.clocks.armed) {
+        state.clocks.lastTickAt = Date.now();
+        ensureClockTimer();
+      }
+      trackPosition();
+    }
+
+    function getLegalMovesForSelected() {
+      if (state.selected === null) return [];
+      const legal = getLegalAtomicMoves(state.board, state.turn, state.forcedPiece);
+      return legal.filter((m) => m.from === state.selected);
+    }
+
+    function selectPiece(index) {
+      if (state.gameOver || state.thinking) return;
+      const piece = state.board[index];
+      if (!piece || owner(piece) !== state.turn) {
+        setPlayNote("Select one of your own pieces.");
+        return;
+      }
+      if (state.forcedPiece !== null && index !== state.forcedPiece) {
+        setPlayNote("You must continue the jump with the highlighted piece.");
+        return;
+      }
+
+      const legal = getLegalAtomicMoves(state.board, state.turn, state.forcedPiece);
+      if (legal.some((m) => m.from === index)) {
+        state.selected = index;
+        setPlayNote("");
+      } else {
+        if (state.rules.forcedCaptures && legal.some((m) => m.capture !== null)) {
+          setPlayNote("Capture is required. Select a piece that can jump.");
+        } else {
+          setPlayNote("That piece has no legal move right now.");
+        }
+      }
+    }
+
+    function getIllegalMoveReason(index) {
+      const legal = getLegalAtomicMoves(state.board, state.turn, state.forcedPiece);
+      if (legal.length === 0) return "No legal move available.";
+
+      if (state.selected === null) {
+        return "Select a movable piece first.";
+      }
+
+      const selectedLegal = legal.filter((m) => m.from === state.selected);
+      if (selectedLegal.length === 0) {
+        return "Selected piece cannot move.";
+      }
+
+      if (state.rules.forcedCaptures && selectedLegal.some((m) => m.capture !== null)) {
+        return "Capture is mandatory. Choose a jump square.";
+      }
+
+      if (selectedLegal.some((m) => m.to === index)) {
+        return "";
+      }
+
+      return "That destination is not legal for this piece.";
+    }
+
+    function handleIllegalMoveAttempt(reason) {
+      const msg = reason || "Illegal move.";
+      if (state.mode === "online" || state.rules.illegalMovePolicy !== "penalty") {
+        setPlayNote(`Blocked: ${msg}`);
+        appendAuditEvent("illegal_move_blocked", { reason: msg });
+        return;
+      }
+
+      const offender = state.turn;
+      state.selected = null;
+      state.forcedPiece = null;
+      state.hintMove = null;
+      state.turn = opposite(state.turn);
+      state.clocks.lastTickAt = Date.now();
+      state.moveIndex += 1;
+      state.moveLog.push(`${state.moveIndex}. ${sideName(offender)} illegal attempt (turn forfeited)`);
+      appendAuditEvent("illegal_move_penalty", { by: offender, reason: msg });
+      setPlayNote(`Penalty applied: ${playerName(offender)} lost the turn.`);
+    }
+
+    function tryMove(index) {
+      const legal = getLegalMovesForSelected();
+      const chosen = legal.find((m) => m.to === index);
+      if (!chosen) {
+        handleIllegalMoveAttempt(getIllegalMoveReason(index));
+        return false;
+      }
+      if (state.mode === "online") {
+        submitOnlineMove(chosen);
+        return true;
+      }
+      applyAtomicMoveToState(chosen);
+      setPlayNote("");
+      return true;
+    }
+
+    function maybeQueueAI() {
+      if (state.mode !== "ai") return;
+      if (state.gameOver || state.thinking) return;
+      if (getDrawReason()) return;
+      if (state.turn !== state.aiColor) return;
+
+      state.thinking = true;
+      render();
+      const p = getAIProfile();
+      const s = getAISpeedProfile();
+      state.aiTimer = setTimeout(runAITurn, Math.round(p.thinkMs * s.thinkFactor));
+    }
+
+    function runAITurn() {
+      if (state.mode !== "ai" || state.gameOver || state.turn !== state.aiColor) {
+        state.thinking = false;
+        render();
+        return;
+      }
+
+      const profile = getAIProfile();
+      const speed = getAISpeedProfile();
+      let action = chooseAIAction();
+
+      if (!action) {
+        state.thinking = false;
+        render();
+        return;
+      }
+
+      let step = 0;
+      const runStep = () => {
+        if (step >= action.sequence.length) {
+          state.thinking = false;
+          render();
+          maybeQueueAI();
+          return;
+        }
+        applyAtomicMoveToState(action.sequence[step]);
+        step += 1;
+        render();
+        state.aiTimer = setTimeout(runStep, Math.round(profile.stepMs * speed.stepFactor));
+      };
+
+      runStep();
+    }
+
+    function clearAITimer() {
+      if (state.aiTimer) {
+        clearTimeout(state.aiTimer);
+        state.aiTimer = null;
+      }
+    }
+
+    function undoMove() {
+      clearAITimer();
+      state.thinking = false;
+      if (state.history.length === 0) return;
+
+      restoreSnapshot(state.history.pop());
+
+      if (state.mode === "ai" && state.turn === state.aiColor && state.history.length > 0) {
+        restoreSnapshot(state.history.pop());
+      }
+
+      appendAuditEvent("undo", { turn: state.turn });
+      render();
+    }
+
+    function clearLog() {
+      state.moveLog = [];
+      state.moveIndex = 0;
+      appendAuditEvent("history_cleared");
+      render();
+    }
+
+    function updateStatusAndCounts() {
+      const counts = countPieces(state.board);
+      redCountEl.textContent = `${sideName(RED)} pieces: ${counts.red} (Kings: ${counts.redKings})`;
+      blackCountEl.textContent = `${sideName(BLACK)} pieces: ${counts.black} (Kings: ${counts.blackKings})`;
+
+      if (state.mode === "online") {
+        state.resultRecorded = true;
+        if (!state.online.connected) {
+          state.gameOver = false;
+          statusEl.textContent = "Online mode: connect and find a ranked match.";
+          return;
+        }
+        if (state.online.queueing && !state.online.activeMatchId) {
+          state.gameOver = false;
+          statusEl.textContent = state.online.status;
+          return;
+        }
+        if (!state.online.activeMatchId) {
+          state.gameOver = false;
+          if (state.online.resultType === "draw") {
+            statusEl.textContent = `Last online result: draw. ${state.online.resultReason}`.trim();
+            return;
+          }
+          if (state.online.resultType === "win" && state.online.winnerColor) {
+            const won = state.online.winnerColor === state.online.color;
+            statusEl.textContent = won
+              ? `Last online result: win. ${state.online.resultReason}`.trim()
+              : `Last online result: loss. ${state.online.resultReason}`.trim();
+            return;
+          }
+          statusEl.textContent = "Online connected. Tap Find Ranked Match.";
+          return;
+        }
+        if (state.gameOver) {
+          if (state.online.resultType === "draw") {
+            statusEl.textContent = `Online match ended in draw. ${state.online.resultReason}`.trim();
+          } else if (state.online.winnerColor) {
+            const won = state.online.winnerColor === state.online.color;
+            statusEl.textContent = won
+              ? `Online win. ${state.online.resultReason}`.trim()
+              : `Online loss. ${state.online.resultReason}`.trim();
+          } else {
+            statusEl.textContent = "Online match finished.";
+          }
+          return;
+        }
+        if (!state.online.color) {
+          statusEl.textContent = "Waiting for server color assignment...";
+          return;
+        }
+        const yourTurn = state.turn === state.online.color;
+        statusEl.textContent = yourTurn
+          ? `Your turn online vs ${state.online.opponentName}.`
+          : `${state.online.opponentName} is thinking...`;
+        return;
+      }
+
+      const timeoutLoser = state.timeoutLoser;
+      const winner = timeoutLoser ? opposite(timeoutLoser) : getWinner(state.board, state.turn);
+      const drawReason = winner ? null : getDrawReason();
+      state.gameOver = winner !== null || drawReason !== null;
+      const defaultClockNote = "Clock starts after first legal move.";
+      if (getTimeControlProfile().initialMs && !state.clocks.armed && !state.gameOver) {
+        if (!playNoteEl.textContent.trim()) setPlayNote(defaultClockNote);
+      } else if (playNoteEl.textContent === defaultClockNote) {
+        setPlayNote("");
+      }
+      if (winner) {
+        if (!state.resultRecorded) {
+          state.resultRecorded = true;
+          clearClockTimer();
+          if (winner === RED) {
+            state.scores.red += 1;
+          } else {
+            state.scores.black += 1;
+          }
+          const result = {
+            type: "win",
+            winner,
+            reason: timeoutLoser ? `${sideName(timeoutLoser)} ran out of time.` : ""
+          };
+          finalizeCompletedGame(result);
+          saveProfile();
+          updateScoreUI();
+          updateAnalyticsUI();
+          showGameOverModal(result);
+          maybeShowInterstitialAd("game_over_win");
+        }
+        statusEl.textContent = timeoutLoser
+          ? `Game over on time. ${sideName(winner)} wins.`
+          : `Game over. ${sideName(winner)} wins.`;
+        return;
+      }
+      if (drawReason) {
+        if (!state.resultRecorded) {
+          state.resultRecorded = true;
+          clearClockTimer();
+          const result = { type: "draw", message: drawReason };
+          finalizeCompletedGame(result);
+          saveProfile();
+          updateAnalyticsUI();
+          showGameOverModal(result);
+          maybeShowInterstitialAd("game_over_draw");
+        }
+        statusEl.textContent = `Game over. ${drawReason}`;
+        return;
+      }
+      state.resultRecorded = false;
+
+      if (state.thinking && state.mode === "ai" && state.turn === state.aiColor) {
+        statusEl.textContent = `${playerName(state.aiColor)} is thinking...`;
+        return;
+      }
+
+      const turnName = sideName(state.turn);
+      const legal = getLegalAtomicMoves(state.board, state.turn, state.forcedPiece);
+      const mustCapture = state.rules.forcedCaptures && legal.some((m) => m.capture !== null);
+      const hintsLeft = availableHintCredits();
+
+      if (state.mode === "ai") {
+        if (state.turn === state.aiColor) {
+          statusEl.textContent = `${playerName(state.aiColor)} turn.`;
+        } else {
+          statusEl.textContent = `${playerName(state.humanColor)} turn.${mustCapture ? " Capture required." : ""}${state.forcedPiece !== null ? " Continue jump." : ""} Hints: ${hintsLeft}.`;
+        }
+        return;
+      }
+
+      statusEl.textContent = `${turnName}'s turn.${mustCapture ? " Capture required." : ""}${state.forcedPiece !== null ? " Continue jump." : ""} Hints: ${hintsLeft}.`;
+    }
+
+    function renderHistory() {
+      historyEl.innerHTML = "";
+      if (state.moveLog.length === 0) {
+        const item = document.createElement("li");
+        item.textContent = "No moves yet.";
+        historyEl.appendChild(item);
+        return;
+      }
+
+      for (const line of state.moveLog) {
+        const item = document.createElement("li");
+        item.textContent = line;
+        historyEl.appendChild(item);
+      }
+
+      historyEl.scrollTop = historyEl.scrollHeight;
+    }
+
+    function renderFileLabels() {
+      const labels = [];
+      for (let c = 0; c < SIZE; c++) {
+        const file = state.flip ? FILES[SIZE - 1 - c] : FILES[c];
+        labels.push(file);
+      }
+
+      topFilesEl.innerHTML = "";
+      bottomFilesEl.innerHTML = "";
+      for (const label of labels) {
+        const t = document.createElement("span");
+        t.textContent = label;
+        const b = document.createElement("span");
+        b.textContent = label;
+        topFilesEl.appendChild(t);
+        bottomFilesEl.appendChild(b);
+      }
+    }
+
+    function renderBoard() {
+      boardEl.innerHTML = "";
+
+      const legalForTurn = getLegalAtomicMoves(state.board, state.turn, state.forcedPiece);
+      const sources = new Set(legalForTurn.map((m) => m.from));
+      const targets = new Set(getLegalMovesForSelected().map((m) => m.to));
+
+      for (let vRow = 0; vRow < SIZE; vRow++) {
+        for (let vCol = 0; vCol < SIZE; vCol++) {
+          const actual = visualToActual(vRow, vCol);
+          const squareIndex = idx(actual.row, actual.col);
+          const dark = isDark(actual.row, actual.col);
+          const square = document.createElement("button");
+
+          square.type = "button";
+          square.className = `square ${dark ? "dark" : "light"}`;
+
+          if (state.lastMove) {
+            if (state.lastMove.from === squareIndex) square.classList.add("last-from");
+            if (state.lastMove.to === squareIndex) square.classList.add("last-to");
+          }
+
+          if (sources.has(squareIndex) && state.board[squareIndex] && owner(state.board[squareIndex]) === state.turn) {
+            square.classList.add("selectable");
+          }
+          if (state.selected === squareIndex) square.classList.add("selected");
+          if (targets.has(squareIndex)) square.classList.add("target");
+          if (state.hintMove && state.hintMove.from === squareIndex) square.classList.add("hint-from");
+          if (state.hintMove && state.hintMove.to === squareIndex) square.classList.add("hint-to");
+
+          square.addEventListener("click", () => {
+            if (state.thinking) return;
+            if (!isHumanTurn()) return;
+            const piece = state.board[squareIndex];
+
+            if (piece && owner(piece) === state.turn) {
+              selectPiece(squareIndex);
+              state.hintMove = null;
+              render();
+              return;
+            }
+
+            const moved = tryMove(squareIndex);
+            if (moved || playNoteEl.textContent) {
+              render();
+            }
+          });
+
+          const piece = state.board[squareIndex];
+          if (piece) {
+            const disc = document.createElement("span");
+            disc.className = `piece ${owner(piece) === RED ? "red" : "black"}${isKing(piece) ? " king" : ""}`;
+            square.appendChild(disc);
+          }
+
+          boardEl.appendChild(square);
+        }
+      }
+    }
+
+    function render() {
+      renderFileLabels();
+      renderBoard();
+      updateStatusAndCounts();
+      updateClockUI();
+      updateScoreUI();
+      renderMatchRewardUI();
+      updateAnalyticsUI();
+      updateStoreUI();
+      updateHintButton();
+      renderHistory();
+      const onlineMode = state.mode === "online";
+      undoBtn.disabled = onlineMode || state.history.length === 0 || state.thinking || state.gameOver;
+      const aiMode = state.mode === "ai";
+      sideRow.hidden = !aiMode;
+      levelRow.hidden = !aiMode;
+      speedRow.hidden = !aiMode;
+      onlinePanel.hidden = !onlineMode;
+      paceRow.hidden = false;
+      captureRuleRow.hidden = false;
+      illegalMoveRow.hidden = false;
+      sideSelect.disabled = !aiMode;
+      depthSelect.disabled = !aiMode;
+      speedSelect.disabled = !aiMode;
+      paceSelect.disabled = false;
+      captureRuleSelect.disabled = onlineMode;
+      illegalMoveSelect.disabled = onlineMode;
+      redNameInput.disabled = onlineMode;
+      blackNameInput.disabled = onlineMode;
+      newGameBtn.disabled = onlineMode && (state.online.queueing || Boolean(state.online.activeMatchId));
+      quickMatchBtn.disabled = onlineMode;
+      onlineConnectBtn.disabled = false;
+      onlineQueueBtn.disabled = !onlineMode || !state.online.connected || state.online.queueing || Boolean(state.online.activeMatchId);
+      onlineCancelQueueBtn.disabled = !onlineMode || !state.online.queueing;
+      onlineSurrenderBtn.disabled = !onlineMode || !Boolean(state.online.activeMatchId) || state.gameOver;
+      syncNameInputs();
+      saveProfile();
+      if (!onlineMode) {
+        ensureClockTimer();
+      }
+      maybeQueueAI();
+    }
+
+    function resetGame() {
+      if (state.mode === "online" && (state.online.activeMatchId || state.online.queueing)) {
+        setOnlineStatus("Finish or resign the online match before resetting.");
+        render();
+        return;
+      }
+      clearAITimer();
+      clearClockTimer();
+      hideGameOverModal();
+      applyModeSettings();
+      applyRuleSettings();
+      state.board = createBoard();
+      state.turn = RED;
+      state.selected = null;
+      state.forcedPiece = null;
+      state.gameOver = false;
+      state.resultRecorded = false;
+      state.thinking = false;
+      state.history = [];
+      state.moveLog = [];
+      state.moveIndex = 0;
+      state.lastMove = null;
+      state.hintMove = null;
+      setPlayNote("");
+      state.hintsRemaining = FREE_HINTS_PER_GAME;
+      state.timeoutLoser = null;
+      resetPositionTracking();
+      resetClocks();
+      startActiveGameSession();
+      render();
+    }
+
+    modeSelect.addEventListener("change", () => {
+      const previousMode = state.mode;
+      state.mode = modeSelect.value;
+      if (previousMode === "online" && state.mode !== "online") {
+        if (state.online.queueing) {
+          cancelOnlineQueue();
+        }
+        clearOnlineMatchContext();
+        closeOnlineSocket();
+      }
+      applyModeSettings();
+      maybeAssignComputerName();
+      saveProfile();
+      syncNameInputs();
+      if (state.mode === "online") {
+        setPlayNote("Online ranked uses strict server validation.");
+        if (state.online.connected && state.online.token) {
+          connectOnlineSocket();
+        }
+        hideGameOverModal();
+        setOnlineStatus(state.online.connected
+          ? "Online connected. Tap Find Ranked Match."
+          : "Online mode: connect your session.");
+        loadOnlineLadder();
+        render();
+        return;
+      }
+      setPlayNote("");
+      resetGame();
+    });
+
+    sideSelect.addEventListener("change", () => {
+      state.mode = modeSelect.value;
+      applyModeSettings();
+      maybeAssignComputerName();
+      saveProfile();
+      syncNameInputs();
+      resetGame();
+    });
+
+    depthSelect.addEventListener("change", () => {
+      state.aiLevel = depthSelect.value;
+      render();
+    });
+
+    speedSelect.addEventListener("change", () => {
+      state.aiSpeed = speedSelect.value;
+      render();
+    });
+
+    paceSelect.addEventListener("change", () => {
+      state.timeControl = paceSelect.value;
+      resetGame();
+    });
+
+    captureRuleSelect.addEventListener("change", () => {
+      applyRuleSettings();
+      resetGame();
+    });
+
+    illegalMoveSelect.addEventListener("change", () => {
+      applyRuleSettings();
+      setPlayNote(
+        state.rules.illegalMovePolicy === "penalty"
+          ? "Penalty mode enabled: illegal attempt forfeits turn."
+          : "Strict mode enabled: illegal moves are blocked."
+      );
+      saveProfile();
+      render();
+    });
+
+    redNameInput.addEventListener("input", () => {
+      applyPlayerName(RED, redNameInput.value, false);
+    });
+    redNameInput.addEventListener("change", () => {
+      applyPlayerName(RED, redNameInput.value, true);
+    });
+
+    blackNameInput.addEventListener("input", () => {
+      applyPlayerName(BLACK, blackNameInput.value, false);
+    });
+    blackNameInput.addEventListener("change", () => {
+      applyPlayerName(BLACK, blackNameInput.value, true);
+    });
+
+    variantPicker.addEventListener("click", (event) => {
+      const target = event.target.closest("button[data-variant]");
+      if (!target) return;
+      const nextVariant = target.dataset.variant || "english";
+      if (nextVariant === state.variant) return;
+      applyVariant(nextVariant);
+      captureRuleSelect.value = "forced";
+      resetGame();
+      const hasFlyingKings = nextVariant === "russia" || nextVariant === "nigeria" || nextVariant === "african";
+      const menBackward = nextVariant === "russia";
+      setPlayNote(
+        hasFlyingKings
+          ? (menBackward ? "Variant loaded: flying kings + backward man captures." : "Variant loaded: flying kings enabled.")
+          : "Variant loaded: short kings."
+      );
+      render();
+    });
+
+    newGameBtn.addEventListener("click", resetGame);
+    quickMatchBtn.addEventListener("click", startQuickMatch);
+    undoBtn.addEventListener("click", undoMove);
+    hintBtn.addEventListener("click", requestHint);
+    flipBtn.addEventListener("click", () => {
+      state.flip = !state.flip;
+      render();
+    });
+    clearHistoryBtn.addEventListener("click", clearLog);
+    buyRemoveAdsBtn.addEventListener("click", () => {
+      purchaseRemoveAds();
+    });
+    buyProPassBtn.addEventListener("click", () => {
+      purchaseProPass();
+    });
+    buyOfflineUpgradeBtn.addEventListener("click", () => {
+      purchaseOfflineUpgrade();
+    });
+    buyHintPackBtn.addEventListener("click", () => {
+      purchaseHintPack();
+    });
+    buyUndoPackBtn.addEventListener("click", () => {
+      purchaseUndoPack();
+    });
+    restorePurchasesBtn.addEventListener("click", () => {
+      restorePurchases();
+    });
+    watchRewardBtn.addEventListener("click", () => {
+      showRewardedAd("hint_credit");
+    });
+    themeSelect.addEventListener("change", () => {
+      applyTheme(themeSelect.value);
+      render();
+    });
+    doubleCoinsBtn.addEventListener("click", () => {
+      if (!canClaimMatchRewardBonus()) return;
+      showRewardedAd("match_double");
+    });
+    onlineConnectBtn.addEventListener("click", () => {
+      connectOnline();
+    });
+    onlineQueueBtn.addEventListener("click", () => {
+      joinOnlineMatchmaking();
+    });
+    onlineCancelQueueBtn.addEventListener("click", () => {
+      cancelOnlineQueue();
+    });
+    onlineSurrenderBtn.addEventListener("click", () => {
+      surrenderOnlineMatch();
+    });
+    onlineNameInput.addEventListener("input", () => {
+      state.online.playerName = sanitizeName(onlineNameInput.value, "Player");
+      onlineNameInput.value = state.online.playerName;
+    });
+    onlineNameInput.addEventListener("change", () => {
+      state.online.playerName = sanitizeName(onlineNameInput.value, "Player");
+      onlineNameInput.value = state.online.playerName;
+      saveProfile();
+    });
+    onlineApiInput.addEventListener("change", () => {
+      state.online.apiBase = normalizeOnlineApiBase(onlineApiInput.value);
+      onlineApiInput.value = state.online.apiBase;
+      saveProfile();
+    });
+    resetScoreBtn.addEventListener("click", () => {
+      state.scores.red = 0;
+      state.scores.black = 0;
+      saveProfile();
+      render();
+    });
+    exportDataBtn.addEventListener("click", exportEnterpriseData);
+    importDataBtn.addEventListener("click", () => {
+      importDataInput.value = "";
+      importDataInput.click();
+    });
+    importDataInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+      try {
+        const text = await file.text();
+        const payload = JSON.parse(text);
+        importEnterpriseData(payload);
+      } catch (err) {
+        alert("Import failed. Please select a valid enterprise JSON export.");
+      } finally {
+        importDataInput.value = "";
+      }
+    });
+    clearAllDataBtn.addEventListener("click", () => {
+      const approved = confirm("Clear all saved game data, analytics, and archives?");
+      if (!approved) return;
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+      state.playerNames.red = "Red Player";
+      state.playerNames.black = "Black Player";
+      state.scores.red = 0;
+      state.scores.black = 0;
+      state.coins = 0;
+      state.stats = normalizeStats();
+      state.matchArchive = [];
+      state.monetization = {
+        adsRemoved: false,
+        proPass: false,
+        offlinePremium: false,
+        rewardCredits: 0,
+        undoCredits: 0,
+        pendingRewardKind: "",
+        rewardedListenerReady: false,
+        storeReady: false,
+        storeStatus: "Store not initialized yet."
+      };
+      state.matchReward = {
+        matchId: "",
+        baseCoins: 0,
+        bonusCoins: 0,
+        bonusClaimed: false
+      };
+      state.online = {
+        connected: false,
+        apiBase: defaultOnlineApiBase(),
+        token: "",
+        playerId: "",
+        playerName: "",
+        playerRating: 1200,
+        queueing: false,
+        activeMatchId: "",
+        color: null,
+        opponentName: "",
+        opponentRating: 1200,
+        matchPollTimer: null,
+        queuePollTimer: null,
+        socket: null,
+        wsConnected: false,
+        wsRetryTimer: null,
+        lastRevision: 0,
+        status: "Online mode idle.",
+        finishedRevision: 0,
+        resultType: null,
+        winnerColor: null,
+        resultReason: ""
+      };
+      state.rules.forcedCaptures = true;
+      state.rules.illegalMovePolicy = "penalty";
+      state.rules.allowMenBackwardCapture = false;
+      state.rules.flyingKings = false;
+      state.timeControl = "rapid120";
+      state.hintsRemaining = FREE_HINTS_PER_GAME;
+      state.hintMove = null;
+      state.timeoutLoser = null;
+      state.flip = false;
+      state.variant = "english";
+      modeSelect.value = "pvp";
+      sideSelect.value = "red";
+      depthSelect.value = "soft";
+      speedSelect.value = "verySlow";
+      paceSelect.value = "rapid120";
+      captureRuleSelect.value = "forced";
+      illegalMoveSelect.value = "penalty";
+      state.mode = modeSelect.value;
+      state.aiLevel = depthSelect.value;
+      state.aiSpeed = speedSelect.value;
+      state.timeControl = paceSelect.value;
+      applyVariant(state.variant, false);
+      applyModeSettings();
+      applyRuleSettings();
+      syncNameInputs();
+      closeOnlineSocket();
+      stopOnlinePolling();
+      resetGame();
+    });
+    playAgainBtn.addEventListener("click", () => {
+      hideGameOverModal();
+      resetGame();
+    });
+    closeModalBtn.addEventListener("click", hideGameOverModal);
+
+    installBtn.addEventListener("click", async () => {
+      if (!state.deferredInstallPrompt) return;
+      state.deferredInstallPrompt.prompt();
+      try {
+        await state.deferredInstallPrompt.userChoice;
+      } catch (err) {
+      }
+      state.deferredInstallPrompt = null;
+      installBtn.hidden = true;
+    });
+
+    window.addEventListener("beforeinstallprompt", (event) => {
+      event.preventDefault();
+      state.deferredInstallPrompt = event;
+      installBtn.hidden = false;
+    });
+
+    window.addEventListener("appinstalled", () => {
+      installBtn.hidden = true;
+      state.deferredInstallPrompt = null;
+    });
+
+    window.addEventListener("beforeunload", () => {
+      closeOnlineSocket();
+      stopOnlinePolling();
+    });
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {
+        });
+      });
+    }
+
+    const runtimeSnapshot = loadProfile();
+    state.online.apiBase = normalizeOnlineApiBase(state.online.apiBase || defaultOnlineApiBase());
+    onlineApiInput.value = state.online.apiBase;
+    state.mode = modeSelect.value;
+    state.aiLevel = depthSelect.value;
+    state.aiSpeed = speedSelect.value;
+    state.timeControl = paceSelect.value;
+    state.variant = normalizeVariant(state.variant);
+    applyVariant(state.variant, false);
+    applyRuleSettings();
+    applyModeSettings();
+    maybeAssignComputerName();
+    syncNameInputs();
+    updateScoreUI();
+    updateAnalyticsUI();
+
+    if (runtimeSnapshot && restoreRuntimeSnapshot(runtimeSnapshot)) {
+      maybeAssignComputerName();
+      syncNameInputs();
+      render();
+    } else {
+      resetGame();
+    }
+    initializeMonetization();
+    resumeOnlineSession().then(async () => {
+      if (
+        state.mode === "online" &&
+        state.online.connected &&
+        state.online.activeMatchId
+      ) {
+        try {
+          const data = await onlineFetch(`/matches/${state.online.activeMatchId}`);
+          if (data.match) {
+            applyOnlineMatchSnapshot(data.match);
+            startOnlineMatchPolling();
+          }
+        } catch (_err) {
+          clearOnlineMatchContext();
+          setOnlineStatus("Unable to resume online match.");
+        }
+      }
+      render();
+    });
+  </script>
+</body>
+</html>
+
