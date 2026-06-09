@@ -17,6 +17,15 @@ function parseOrigins(value) {
     .filter(Boolean);
 }
 
+function parsePositiveInteger(value, fallback, name) {
+  if (value === undefined || value === null || value === "") return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+  return parsed;
+}
+
 const root = path.resolve(__dirname, "..");
 const configuredDbFile = process.env.DB_FILE || "data/checkers.sqlite";
 
@@ -25,6 +34,16 @@ module.exports = {
   port: Number(process.env.PORT || 4000),
   host: process.env.HOST || "127.0.0.1",
   trustProxy: parseBoolean(process.env.TRUST_PROXY, false),
+  httpRateLimitWindowMs: parsePositiveInteger(
+    process.env.HTTP_RATE_LIMIT_WINDOW_MS,
+    60_000,
+    "HTTP_RATE_LIMIT_WINDOW_MS"
+  ),
+  httpRateLimitMax: parsePositiveInteger(
+    process.env.HTTP_RATE_LIMIT_MAX,
+    300,
+    "HTTP_RATE_LIMIT_MAX"
+  ),
   corsOrigins: parseOrigins(process.env.CORS_ORIGINS),
   dbFile:
     configuredDbFile === ":memory:"

@@ -37,6 +37,11 @@ Open `http://127.0.0.1:4000`.
 
 For macOS or Linux, use `cp .env.example .env`.
 
+`HTTP_RATE_LIMIT_MAX` controls the maximum requests accepted from one client
+during `HTTP_RATE_LIMIT_WINDOW_MS`. The defaults are 300 requests per minute.
+When deploying behind a trusted reverse proxy, set `TRUST_PROXY=true` only
+after configuring that proxy to replace untrusted forwarded-address headers.
+
 ## Verification
 
 ```bash
