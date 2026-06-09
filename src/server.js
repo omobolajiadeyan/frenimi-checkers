@@ -2,6 +2,7 @@ const http = require("http");
 const path = require("path");
 const cors = require("cors");
 const express = require("express");
+const rateLimit = require("express-rate-limit");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const config = require("./config");
@@ -25,7 +26,7 @@ function createCorsOptions() {
   };
 }
 
-function createApp() {
+function createApp(options = {}) {
   const app = express();
   app.disable("x-powered-by");
   if (config.trustProxy) app.set("trust proxy", 1);
@@ -50,6 +51,14 @@ function createApp() {
       crossOriginEmbedderPolicy: false,
     })
   );
+  const httpRateLimiter = rateLimit({
+    windowMs: options.httpRateLimitWindowMs ?? config.httpRateLimitWindowMs,
+    limit: options.httpRateLimitMax ?? config.httpRateLimitMax,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "Too many requests. Try again shortly." },
+  });
+  app.use(httpRateLimiter);
   app.use(cors(createCorsOptions()));
   app.use(express.json({ limit: "32kb", strict: true }));
   app.use(morgan(config.isProduction ? "combined" : "dev"));
