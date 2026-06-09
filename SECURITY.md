@@ -16,6 +16,8 @@ The latest release and the current `main` branch receive security fixes.
 - Random session tokens stored as hashes
 - Strict CORS and WebSocket origin validation
 - Security headers and restrictive Content Security Policy
-- Request, rate, and WebSocket payload limits
+- Global HTTP rate limiting before API and static-file handlers
+- Additional session and gameplay action limits
+- Request-body and WebSocket payload limits
 - Parameterized SQLite queries
 - Dependency auditing and CodeQL in CI
