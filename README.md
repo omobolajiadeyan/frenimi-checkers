@@ -7,6 +7,15 @@ accounts, or services.
 
 Copyright (c) 2026 FreNiMi.
 
+## Play
+
+Play the public local-AI and two-player demo:
+
+https://omobolajiadeyan.github.io/frenimi-checkers/
+
+The browser demo works offline after its first load. Ranked multiplayer and
+persistent ratings require the Node.js deployment described below.
+
 ## Highlights
 
 - American checkers rules with mandatory captures, multi-jumps, kings,
@@ -53,10 +62,11 @@ npm run audit
 
 ## Publish
 
+GitHub Pages publishes the offline local-AI and two-player game from `public/`.
 The full game requires a Node.js server, WebSocket support, and persistent
 SQLite storage. Use the included Render Blueprint or Docker image described in
-[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). GitHub Pages can host only the
-offline front-end assets and cannot provide ranked multiplayer or persistence.
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for ranked multiplayer and
+persistence.
 
 ## Architecture
 
