@@ -16,6 +16,10 @@ https://omobolajiadeyan.github.io/frenimi-checkers/
 The browser demo works offline after its first load. Ranked multiplayer and
 persistent ratings require the Node.js deployment described below.
 
+Share browser, accessibility, offline-install, rules, or AI-balance feedback
+in the [public playtest issue](https://github.com/omobolajiadeyan/frenimi-checkers/issues/4).
+Report security concerns privately through [SECURITY.md](SECURITY.md).
+
 ## Highlights
 
 - American checkers rules with mandatory captures, multi-jumps, kings,
