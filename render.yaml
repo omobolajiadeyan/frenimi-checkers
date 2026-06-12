@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: frenimi-checkers
+    runtime: node
+    plan: starter
+    branch: main
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    maxShutdownDelaySeconds: 30
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: HOST
+        value: 0.0.0.0
+      - key: DB_FILE
+        value: /opt/render/project/src/data/checkers.sqlite
+      - key: TRUST_PROXY
+        value: "true"
+    disk:
+      name: frenimi-checkers-data
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1

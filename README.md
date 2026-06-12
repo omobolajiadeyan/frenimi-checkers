@@ -51,6 +51,13 @@ npm test
 npm run audit
 ```
 
+## Publish
+
+The full game requires a Node.js server, WebSocket support, and persistent
+SQLite storage. Use the included Render Blueprint or Docker image described in
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). GitHub Pages can host only the
+offline front-end assets and cannot provide ranked multiplayer or persistence.
+
 ## Architecture
 
 - `public/index.html`: responsive game interface and online client
