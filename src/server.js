@@ -94,6 +94,7 @@ function startServer() {
   const app = createApp();
   const server = http.createServer(app);
   const realtime = createCheckersRealtime(server);
+  let shuttingDown = false;
   app.locals.checkersRealtime = realtime;
   server.listen(config.port, config.host, () => {
     console.log(`FreNiMi Checkers running at http://${config.host}:${config.port}`);
@@ -102,6 +103,21 @@ function startServer() {
     realtime.close();
     closeDatabase();
   });
+
+  function shutdown(signal) {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`Received ${signal}; shutting down FreNiMi Checkers.`);
+    server.close((error) => {
+      if (error) {
+        console.error("Graceful shutdown failed.", error);
+        process.exitCode = 1;
+      }
+    });
+  }
+
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  process.once("SIGINT", () => shutdown("SIGINT"));
   return server;
 }
 

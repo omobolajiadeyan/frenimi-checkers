@@ -26,3 +26,31 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm audit --omit=dev --audit-level=high
+
+  deployment-image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - name: Build production image
+        run: docker build --tag frenimi-checkers:test .
+      - name: Start production image
+        run: |
+          docker run --detach --name frenimi-checkers \
+            --publish 127.0.0.1:4000:4000 \
+            --env HOST=0.0.0.0 \
+            --env PORT=4000 \
+            --env CORS_ORIGINS=http://127.0.0.1:4000 \
+            frenimi-checkers:test
+      - name: Verify health endpoint
+        run: |
+          for attempt in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:4000/api/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs frenimi-checkers
+          exit 1
+      - name: Stop production image
+        if: always()
+        run: docker rm --force frenimi-checkers || true
