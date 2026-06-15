@@ -102,6 +102,13 @@ router.get("/me", requireCheckersAuth, (req, res) => {
 
 router.delete("/session", actionLimiter, requireCheckersAuth, (req, res) => {
   try {
+    const status = getMatchmakingStatus({ playerId: req.checkersPlayer.id });
+    if (status.state === "matched" && status.match?.status === "active") {
+      return res.status(409).json({
+        error: "Resign or finish the active match before disconnecting.",
+      });
+    }
+
     const playerId = revokePlayerSession({ token: req.checkersToken });
     if (!playerId) {
       return res.status(401).json({ error: "Invalid or expired checkers session." });

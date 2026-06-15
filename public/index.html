@@ -2318,6 +2318,10 @@
         await onlineFetch("/session", { method: "DELETE" });
         clearOnlineSession("Online session revoked and removed from this device.");
       } catch (err) {
+        if (/invalid|expired/i.test(String(err && err.message))) {
+          clearOnlineSession("Online session expired. Connect again.");
+          return;
+        }
         setOnlineStatus(`Unable to revoke online session: ${err.message}`);
       }
     }
@@ -3578,6 +3582,9 @@
       if (!payload || typeof payload !== "object") {
         throw new Error("Invalid data file.");
       }
+
+      closeOnlineSocket();
+      clearOnlineMatchContext();
 
       const profile = payload.profile || {};
       state.playerNames.red = sanitizeName(profile?.playerNames?.red, "Red Player");
