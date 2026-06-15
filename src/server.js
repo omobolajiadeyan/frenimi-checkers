@@ -19,7 +19,7 @@ function createCorsOptions() {
       }
       return callback(new Error("CORS origin denied"));
     },
-    methods: ["GET", "HEAD", "OPTIONS", "POST"],
+    methods: ["GET", "HEAD", "OPTIONS", "POST", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: false,
     maxAge: 600,

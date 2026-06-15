@@ -5,6 +5,7 @@ const {
   normalizeCaptureRule,
   createPlayerSession,
   getPlayerBySessionToken,
+  revokePlayerSession,
   joinRankedQueue,
   leaveRankedQueue,
   getMatchmakingStatus,
@@ -68,6 +69,7 @@ function requireCheckersAuth(req, res, next) {
   }
 
   req.checkersPlayer = player;
+  req.checkersToken = token;
   return next();
 }
 
@@ -96,6 +98,22 @@ router.post("/session", sessionLimiter, (req, res) => {
 
 router.get("/me", requireCheckersAuth, (req, res) => {
   return res.json({ player: req.checkersPlayer });
+});
+
+router.delete("/session", actionLimiter, requireCheckersAuth, (req, res) => {
+  try {
+    const playerId = revokePlayerSession({ token: req.checkersToken });
+    if (!playerId) {
+      return res.status(401).json({ error: "Invalid or expired checkers session." });
+    }
+    const realtime = req.app && req.app.locals ? req.app.locals.checkersRealtime : null;
+    if (realtime) {
+      realtime.disconnectPlayer(playerId);
+    }
+    return res.status(204).end();
+  } catch (error) {
+    return handleError(res, error);
+  }
 });
 
 router.get("/leaderboard", (req, res) => {

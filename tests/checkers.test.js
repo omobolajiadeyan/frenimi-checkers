@@ -113,3 +113,31 @@ test("checkers leaderboard returns players", async () => {
   assert.ok(body.leaderboard.length >= 1);
   assert.ok(body.leaderboard[0].displayName);
 });
+
+test("online logout revokes the current session and removes its queue entry", async () => {
+  const session = await createCheckersSession("Logout QA");
+
+  const joined = await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(session.token),
+    body: JSON.stringify({ timeControl: "rapid120", captureRule: "forced" }),
+  });
+  assert.equal(joined.status, 200);
+  assert.equal((await joined.json()).state, "queued");
+
+  const loggedOut = await fetch(`${baseUrl}/api/checkers/session`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${session.token}` },
+  });
+  assert.equal(loggedOut.status, 204);
+
+  const reused = await fetch(`${baseUrl}/api/checkers/me`, {
+    headers: { authorization: `Bearer ${session.token}` },
+  });
+  assert.equal(reused.status, 401);
+
+  const queued = await fetch(`${baseUrl}/api/checkers/matchmaking/status`, {
+    headers: { authorization: `Bearer ${session.token}` },
+  });
+  assert.equal(queued.status, 401);
+});

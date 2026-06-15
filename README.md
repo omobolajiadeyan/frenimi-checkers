@@ -29,7 +29,8 @@ Report security concerns privately through [SECURITY.md](SECURITY.md).
 - SQLite-backed matches, sessions, ratings, and leaderboard
 - Installable Progressive Web App with offline game assets
 - Security headers, strict CORS, request limits, rate limiting, hashed session
-  tokens, bounded WebSocket payloads, and origin validation
+  tokens, explicit session revocation, bounded WebSocket payloads, and origin
+  validation
 - Automated engine, API, multiplayer, and security regression tests
 
 ## Requirements
@@ -85,8 +86,9 @@ persistence.
 
 Session tokens are random values stored only as SHA-256 hashes in SQLite.
 Tokens are accepted through authorization headers or an authenticated
-WebSocket message, never through URLs. Production deployments should use HTTPS
-and WSS behind a maintained reverse proxy.
+WebSocket message, never through URLs or data exports. Players can revoke the
+current session with the Disconnect Session control. Production deployments
+should use HTTPS and WSS behind a maintained reverse proxy.
 
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
