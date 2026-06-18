@@ -3584,7 +3584,6 @@
       }
 
       closeOnlineSocket();
-      clearOnlineMatchContext();
 
       const profile = payload.profile || {};
       state.playerNames.red = sanitizeName(profile?.playerNames?.red, "Red Player");
@@ -3609,6 +3608,9 @@
       state.matchArchive = Array.isArray(payload.matchArchive) ? payload.matchArchive.slice(0, ARCHIVE_LIMIT) : [];
 
       const restored = restoreRuntimeSnapshot(payload.runtime);
+      clearOnlineMatchContext();
+      state.online.token = "";
+      state.online.connected = false;
       applyModeSettings();
       maybeAssignComputerName();
       syncNameInputs();
