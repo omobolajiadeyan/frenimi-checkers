@@ -90,6 +90,11 @@ WebSocket message, never through URLs or data exports. Players can revoke the
 current session with the Disconnect Session control. Production deployments
 should use HTTPS and WSS behind a maintained reverse proxy.
 
+See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for trust boundaries,
+security controls, and residual risks. See
+[docs/PUBLIC_EVIDENCE.md](docs/PUBLIC_EVIDENCE.md) for the public engineering
+evidence this project is intended to demonstrate.
+
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 
 ## License
