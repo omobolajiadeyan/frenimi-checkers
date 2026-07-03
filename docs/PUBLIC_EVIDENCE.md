@@ -9,6 +9,7 @@ automated security testing.
 - Repository: https://github.com/omobolajiadeyan/frenimi-checkers
 - Browser demo: https://omobolajiadeyan.github.io/frenimi-checkers/
 - Public playtest issue: https://github.com/omobolajiadeyan/frenimi-checkers/issues/4
+- Playtest guide: [PLAYTEST_GUIDE.md](PLAYTEST_GUIDE.md)
 
 ## Engineering Evidence
 

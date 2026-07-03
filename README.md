@@ -18,6 +18,8 @@ persistent ratings require the Node.js deployment described below.
 
 Share browser, accessibility, offline-install, rules, or AI-balance feedback
 in the [public playtest issue](https://github.com/omobolajiadeyan/frenimi-checkers/issues/4).
+Use the [public playtest guide](docs/PLAYTEST_GUIDE.md) for the details that
+make feedback actionable.
 Report security concerns privately through [SECURITY.md](SECURITY.md).
 
 ## Highlights
