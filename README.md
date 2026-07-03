@@ -71,7 +71,8 @@ GitHub Pages publishes the offline local-AI and two-player game from `public/`.
 The full game requires a Node.js server, WebSocket support, and persistent
 SQLite storage. Use the included Render Blueprint or Docker image described in
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for ranked multiplayer and
-persistence.
+persistence. After deploying, run the
+[multiplayer deployment smoke test](docs/DEPLOYMENT_SMOKE_TEST.md).
 
 ## Architecture
 
@@ -93,7 +94,8 @@ should use HTTPS and WSS behind a maintained reverse proxy.
 See [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) for trust boundaries,
 security controls, and residual risks. See
 [docs/PUBLIC_EVIDENCE.md](docs/PUBLIC_EVIDENCE.md) for the public engineering
-evidence this project is intended to demonstrate.
+evidence this project is intended to demonstrate. For a short public walkthrough,
+use the [session revocation demo script](docs/SESSION_REVOCATION_DEMO.md).
 
 Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 

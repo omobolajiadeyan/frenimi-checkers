@@ -24,6 +24,9 @@ To deploy:
 5. Open the assigned `onrender.com` URL and test local play, session creation,
    matchmaking in two separate browser profiles, and WebSocket updates.
 
+Use [DEPLOYMENT_SMOKE_TEST.md](DEPLOYMENT_SMOKE_TEST.md) for a repeatable
+post-deployment checklist.
+
 Render supplies `RENDER_EXTERNAL_URL`, which the application automatically
 adds to its allowed HTTP and WebSocket origins. Add any custom domain to
 `CORS_ORIGINS` before directing traffic to it.

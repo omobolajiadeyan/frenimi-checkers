@@ -32,7 +32,7 @@ The project is useful as public evidence of:
 
 ## Next Public Signals
 
-- Merge the revocable-session PR after required review.
-- Add one short demo video showing offline play and session revocation.
+- Record one short demo video using `docs/SESSION_REVOCATION_DEMO.md`.
+- Run `docs/DEPLOYMENT_SMOKE_TEST.md` after the first public server deployment.
 - Add public playtest feedback from real users.
 - Publish a technical note on secure WebSocket session handling.
