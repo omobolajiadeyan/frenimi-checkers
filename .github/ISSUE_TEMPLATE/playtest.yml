@@ -1,0 +1,43 @@
+name: Public playtest feedback
+description: Report browser, accessibility, offline, rule, or gameplay feedback
+title: "playtest: "
+labels: ["playtest", "feedback"]
+body:
+  - type: input
+    attributes:
+      label: Demo or deployment URL
+      placeholder: https://omobolajiadeyan.github.io/frenimi-checkers/
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Browser and operating system
+      placeholder: Chrome on Windows 11, Safari on iPhone, Firefox on Ubuntu
+    validations:
+      required: true
+  - type: dropdown
+    attributes:
+      label: Area tested
+      options:
+        - Offline/local game
+        - AI difficulty
+        - Rules correctness
+        - Mobile layout
+        - Accessibility
+        - PWA install/offline mode
+        - Multiplayer deployment
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What happened?
+      description: Include clear steps, expected result, and actual result.
+    validations:
+      required: true
+  - type: checkboxes
+    attributes:
+      label: Safety
+      options:
+        - label: I removed credentials, private URLs, tokens, and personal data.
+          required: true
