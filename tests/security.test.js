@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 process.env.DB_FILE = ":memory:";
 
@@ -90,4 +92,17 @@ test("global HTTP rate limiting protects static and fallback routes", async () =
       limitedServer.close((error) => (error ? reject(error) : resolve()))
     );
   }
+});
+
+test("downloadable player-data exports exclude online bearer tokens", () => {
+  const html = fs.readFileSync(
+    path.join(__dirname, "..", "public", "index.html"),
+    "utf8"
+  );
+  const exportStart = html.indexOf("function exportEnterpriseData()");
+  const importStart = html.indexOf("function importEnterpriseData(", exportStart);
+  assert.ok(exportStart >= 0);
+  assert.ok(importStart > exportStart);
+  const exportFunction = html.slice(exportStart, importStart);
+  assert.doesNotMatch(exportFunction, /token:\s*state\.online\.token/);
 });

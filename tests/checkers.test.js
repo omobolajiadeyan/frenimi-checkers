@@ -113,3 +113,83 @@ test("checkers leaderboard returns players", async () => {
   assert.ok(body.leaderboard.length >= 1);
   assert.ok(body.leaderboard[0].displayName);
 });
+
+test("online logout revokes the current session and removes its queue entry", async () => {
+  const session = await createCheckersSession("Logout QA");
+
+  const joined = await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(session.token),
+    body: JSON.stringify({ timeControl: "rapid120", captureRule: "forced" }),
+  });
+  assert.equal(joined.status, 200);
+  assert.equal((await joined.json()).state, "queued");
+
+  const loggedOut = await fetch(`${baseUrl}/api/checkers/session`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${session.token}` },
+  });
+  assert.equal(loggedOut.status, 204);
+
+  const reused = await fetch(`${baseUrl}/api/checkers/me`, {
+    headers: { authorization: `Bearer ${session.token}` },
+  });
+  assert.equal(reused.status, 401);
+
+  const queued = await fetch(`${baseUrl}/api/checkers/matchmaking/status`, {
+    headers: { authorization: `Bearer ${session.token}` },
+  });
+  assert.equal(queued.status, 401);
+
+  const fresh = await createCheckersSession("Logout QA Fresh");
+  const freshJoin = await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(fresh.token),
+    body: JSON.stringify({ timeControl: "rapid120", captureRule: "forced" }),
+  });
+  assert.equal(freshJoin.status, 200);
+  assert.equal((await freshJoin.json()).state, "queued");
+});
+
+test("online logout is rejected while the player has an active match", async () => {
+  const a = await createCheckersSession("Logout Active A");
+  const b = await createCheckersSession("Logout Active B");
+
+  const joinA = await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(a.token),
+    body: JSON.stringify({ timeControl: "classic", captureRule: "casual" }),
+  });
+  assert.equal(joinA.status, 200);
+  assert.equal((await joinA.json()).state, "queued");
+
+  const joinB = await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(b.token),
+    body: JSON.stringify({ timeControl: "classic", captureRule: "casual" }),
+  });
+  assert.equal(joinB.status, 200);
+  const matched = await joinB.json();
+  assert.equal(matched.state, "matched");
+
+  const loggedOut = await fetch(`${baseUrl}/api/checkers/session`, {
+    method: "DELETE",
+    headers: { authorization: `Bearer ${a.token}` },
+  });
+  assert.equal(loggedOut.status, 409);
+
+  const stillAuthenticated = await fetch(`${baseUrl}/api/checkers/me`, {
+    headers: { authorization: `Bearer ${a.token}` },
+  });
+  assert.equal(stillAuthenticated.status, 200);
+
+  const surrendered = await fetch(
+    `${baseUrl}/api/checkers/matches/${matched.match.id}/surrender`,
+    {
+      method: "POST",
+      headers: authHeaders(b.token),
+      body: JSON.stringify({}),
+    }
+  );
+  assert.equal(surrendered.status, 200);
+});

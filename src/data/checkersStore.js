@@ -450,6 +450,41 @@ function getPlayerBySessionToken(token) {
   return mapPlayer(row);
 }
 
+function revokePlayerSession({ token }) {
+  if (!token) return false;
+  const db = getDb();
+  const tokenHash = hashToken(token);
+  const revokedAt = nowIso();
+
+  const txn = db.transaction(() => {
+    const session = db.prepare(
+      `
+        SELECT player_id
+        FROM checkers_sessions
+        WHERE token_hash = ?
+          AND revoked_at IS NULL
+        LIMIT 1
+      `
+    ).get(tokenHash);
+
+    if (!session) return null;
+
+    db.prepare(
+      `
+        UPDATE checkers_sessions
+        SET revoked_at = ?
+        WHERE token_hash = ?
+          AND revoked_at IS NULL
+      `
+    ).run(revokedAt, tokenHash);
+    db.prepare("DELETE FROM checkers_matchmaking_queue WHERE player_id = ?")
+      .run(session.player_id);
+    return session.player_id;
+  });
+
+  return txn();
+}
+
 function getMatchRowById(matchId) {
   const db = getDb();
   return db.prepare(
@@ -937,6 +972,7 @@ module.exports = {
   normalizeCaptureRule,
   createPlayerSession,
   getPlayerBySessionToken,
+  revokePlayerSession,
   joinRankedQueue,
   leaveRankedQueue,
   getMatchmakingStatus,

@@ -1208,6 +1208,9 @@
                 <button id="onlineCancelQueueBtn" type="button" class="secondary">Cancel</button>
                 <button id="onlineSurrenderBtn" type="button" class="secondary">Resign</button>
               </div>
+              <div class="button-row single">
+                <button id="onlineDisconnectBtn" type="button" class="secondary">Disconnect Session</button>
+              </div>
               <p id="onlineStatus" class="store-note">Online mode idle.</p>
               <div class="history-wrap">
                 <p class="group-title">Ladder</p>
@@ -1674,6 +1677,7 @@
     const onlineQueueBtn = document.getElementById("onlineQueueBtn");
     const onlineCancelQueueBtn = document.getElementById("onlineCancelQueueBtn");
     const onlineSurrenderBtn = document.getElementById("onlineSurrenderBtn");
+    const onlineDisconnectBtn = document.getElementById("onlineDisconnectBtn");
     const onlineStatusEl = document.getElementById("onlineStatus");
     const ladderListEl = document.getElementById("ladderList");
     const buyRemoveAdsBtn = document.getElementById("buyRemoveAdsBtn");
@@ -2281,6 +2285,44 @@
         state.online.playerName = "";
         state.online.playerRating = 1200;
         setOnlineStatus("Online session expired. Connect again.");
+      }
+    }
+
+    function clearOnlineSession(status) {
+      closeOnlineSocket();
+      stopOnlinePolling();
+      clearOnlineMatchContext();
+      state.online.connected = false;
+      state.online.token = "";
+      state.online.playerId = "";
+      state.online.playerName = "";
+      state.online.playerRating = 1200;
+      state.online.queueing = false;
+      onlineNameInput.value = "";
+      setOnlineStatus(status);
+      saveProfile();
+      render();
+    }
+
+    async function disconnectOnline() {
+      if (!state.online.token) {
+        clearOnlineSession("Online session disconnected.");
+        return;
+      }
+      if (state.online.activeMatchId) {
+        setOnlineStatus("Resign or finish the active match before disconnecting.");
+        return;
+      }
+
+      try {
+        await onlineFetch("/session", { method: "DELETE" });
+        clearOnlineSession("Online session revoked and removed from this device.");
+      } catch (err) {
+        if (/invalid|expired/i.test(String(err && err.message))) {
+          clearOnlineSession("Online session expired. Connect again.");
+          return;
+        }
+        setOnlineStatus(`Unable to revoke online session: ${err.message}`);
       }
     }
 
@@ -3515,7 +3557,6 @@
           },
           online: {
             apiBase: state.online.apiBase,
-            token: state.online.token,
             playerId: state.online.playerId,
             playerName: state.online.playerName,
             playerRating: state.online.playerRating
@@ -3542,6 +3583,8 @@
         throw new Error("Invalid data file.");
       }
 
+      closeOnlineSocket();
+
       const profile = payload.profile || {};
       state.playerNames.red = sanitizeName(profile?.playerNames?.red, "Red Player");
       state.playerNames.black = sanitizeName(profile?.playerNames?.black, "Black Player");
@@ -3556,15 +3599,18 @@
       state.monetization.pendingRewardKind = "";
       state.monetization.rewardedListenerReady = false;
       state.online.apiBase = normalizeOnlineApiBase(profile?.online?.apiBase || defaultOnlineApiBase());
-      state.online.token = String(profile?.online?.token || "");
+      state.online.token = "";
       state.online.playerId = String(profile?.online?.playerId || "");
       state.online.playerName = sanitizeName(profile?.online?.playerName, "Player");
       state.online.playerRating = Math.max(600, toSafeCount(profile?.online?.playerRating) || 1200);
-      state.online.connected = Boolean(state.online.token);
+      state.online.connected = false;
       state.stats = normalizeStats(payload.stats);
       state.matchArchive = Array.isArray(payload.matchArchive) ? payload.matchArchive.slice(0, ARCHIVE_LIMIT) : [];
 
       const restored = restoreRuntimeSnapshot(payload.runtime);
+      clearOnlineMatchContext();
+      state.online.token = "";
+      state.online.connected = false;
       applyModeSettings();
       maybeAssignComputerName();
       syncNameInputs();
@@ -4438,6 +4484,7 @@
       onlineQueueBtn.disabled = !onlineMode || !state.online.connected || state.online.queueing || Boolean(state.online.activeMatchId);
       onlineCancelQueueBtn.disabled = !onlineMode || !state.online.queueing;
       onlineSurrenderBtn.disabled = !onlineMode || !Boolean(state.online.activeMatchId) || state.gameOver;
+      onlineDisconnectBtn.disabled = !onlineMode || !state.online.connected || Boolean(state.online.activeMatchId);
       syncNameInputs();
       saveProfile();
       if (!onlineMode) {
@@ -4630,6 +4677,9 @@
     });
     onlineSurrenderBtn.addEventListener("click", () => {
       surrenderOnlineMatch();
+    });
+    onlineDisconnectBtn.addEventListener("click", () => {
+      disconnectOnline();
     });
     onlineNameInput.addEventListener("input", () => {
       state.online.playerName = sanitizeName(onlineNameInput.value, "Player");

@@ -14,6 +14,8 @@ The latest release and the current `main` branch receive security fixes.
 
 - No default accounts, passwords, private datasets, or production secrets
 - Random session tokens stored as hashes
+- Explicit session revocation that also removes matchmaking state
+- Data export/import excludes online bearer tokens
 - Strict CORS and WebSocket origin validation
 - Security headers and restrictive Content Security Policy
 - Global HTTP rate limiting before API and static-file handlers
