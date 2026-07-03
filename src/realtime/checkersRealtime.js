@@ -54,6 +54,18 @@ function createCheckersRealtime(server) {
     }
   }
 
+  function disconnectPlayer(playerId) {
+    const sockets = playerSockets.get(playerId);
+    if (!sockets) return;
+    for (const ws of sockets) {
+      try {
+        ws.close(4002, "Session revoked");
+      } catch (_err) {
+      }
+    }
+    playerSockets.delete(playerId);
+  }
+
   function processMessage(ws, message) {
     const type = String(message && message.type ? message.type : "");
     if (!type) {
@@ -190,6 +202,7 @@ function createCheckersRealtime(server) {
 
   return {
     notifyPlayers,
+    disconnectPlayer,
     close,
   };
 }
