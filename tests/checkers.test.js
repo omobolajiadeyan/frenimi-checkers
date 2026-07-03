@@ -1,8 +1,8 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createApp } = require("../src/server");
 process.env.DB_FILE = ":memory:";
 
+const { createApp } = require("../src/server");
 const { closeDatabase, initDatabase } = require("../src/data/store");
 
 let server;
