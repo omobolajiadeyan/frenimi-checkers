@@ -104,3 +104,8 @@ Report vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
 ## License
 
 MIT License. See [LICENSE](LICENSE).
+
+## Author
+
+**Omobolaji Adeyan** — Cybersecurity Engineer  
+[GitHub](https://github.com/omobolajiadeyan) · [Website](https://omobolajiadeyan.com)
