@@ -5,7 +5,7 @@ AI play and realtime ranked multiplayer. It was extracted into a clean,
 standalone codebase so the game contains no unrelated application data,
 accounts, or services.
 
-Copyright (c) 2026 FreNiMi.
+Copyright (c) 2026 [FreNiMi](https://frenimi.com).
 
 ## Play
 
