@@ -36,8 +36,31 @@ function connect() {
 
 function nextMessage(ws) {
   return new Promise((resolve, reject) => {
-    ws.once("message", (data) => resolve(JSON.parse(data.toString())));
-    ws.once("error", reject);
+    const cleanup = () => {
+      ws.off("message", onMessage);
+      ws.off("error", onError);
+      ws.off("close", onClose);
+    };
+    const onMessage = (data) => {
+      cleanup();
+      try {
+        resolve(JSON.parse(data.toString()));
+      } catch (error) {
+        reject(error);
+      }
+    };
+    const onError = (error) => {
+      cleanup();
+      reject(error);
+    };
+    const onClose = (code) => {
+      cleanup();
+      reject(new Error(`WebSocket closed before a message arrived (${code})`));
+    };
+
+    ws.once("message", onMessage);
+    ws.once("error", onError);
+    ws.once("close", onClose);
   });
 }
 
