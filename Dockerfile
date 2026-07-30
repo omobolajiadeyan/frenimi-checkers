@@ -1,4 +1,4 @@
-FROM node:20.19.0-bookworm-slim AS dependencies
+FROM node:22.23.1-bookworm-slim AS dependencies
 
 ENV NODE_ENV=production
 WORKDIR /app
@@ -10,7 +10,7 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-FROM node:20.19.0-bookworm-slim
+FROM node:22.23.1-bookworm-slim
 
 ENV NODE_ENV=production
 WORKDIR /app
