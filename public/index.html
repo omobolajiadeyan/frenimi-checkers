@@ -827,7 +827,7 @@
       margin: 0;
       text-align: center;
       padding: 0 1rem 1rem;
-      color: #758596;
+      color: #526274;
       font-size: 0.74rem;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -4403,6 +4403,7 @@
           const squareIndex = idx(actual.row, actual.col);
           const dark = isDark(actual.row, actual.col);
           const square = document.createElement("button");
+          const piece = state.board[squareIndex];
 
           square.type = "button";
           square.className = `square ${dark ? "dark" : "light"}`;
@@ -4420,11 +4421,22 @@
           if (state.hintMove && state.hintMove.from === squareIndex) square.classList.add("hint-from");
           if (state.hintMove && state.hintMove.to === squareIndex) square.classList.add("hint-to");
 
+          const coordinate = `${FILES[actual.col]}${SIZE - actual.row}`;
+          const occupant = piece
+            ? `${owner(piece) === RED ? "Red" : "Black"} ${isKing(piece) ? "king" : "piece"}`
+            : "Empty square";
+          const squareState = targets.has(squareIndex)
+            ? ", legal move target"
+            : state.selected === squareIndex
+              ? ", selected"
+              : sources.has(squareIndex)
+                ? ", selectable"
+                : "";
+          square.setAttribute("aria-label", `${coordinate}: ${occupant}${squareState}`);
+
           square.addEventListener("click", () => {
             if (state.thinking) return;
             if (!isHumanTurn()) return;
-            const piece = state.board[squareIndex];
-
             if (piece && owner(piece) === state.turn) {
               selectPiece(squareIndex);
               state.hintMove = null;
@@ -4438,7 +4450,6 @@
             }
           });
 
-          const piece = state.board[squareIndex];
           if (piece) {
             const disc = document.createElement("span");
             disc.className = `piece ${owner(piece) === RED ? "red" : "black"}${isKing(piece) ? " king" : ""}`;
