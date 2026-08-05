@@ -15,3 +15,12 @@ test("labeled interactive groups expose an allowed ARIA role", () => {
     /id="board"[^>]*role="group"[^>]*aria-label="Checkers board"/,
   );
 });
+
+test("every generated board square receives a descriptive accessible name", () => {
+  assert.match(html, /const coordinate = `\$\{FILES\[actual\.col\]\}\$\{SIZE - actual\.row\}`/);
+  assert.match(html, /square\.setAttribute\("aria-label", `\$\{coordinate\}: \$\{occupant\}\$\{squareState\}`\)/);
+});
+
+test("footer copy uses the accessible high-contrast color", () => {
+  assert.match(html, /\.footer-note\s*\{[^}]*color: #526274;/s);
+});
