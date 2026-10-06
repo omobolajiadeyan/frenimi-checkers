@@ -25,7 +25,8 @@ Report security concerns privately through [SECURITY.md](SECURITY.md).
 ## Highlights
 
 - American checkers rules with mandatory captures, multi-jumps, kings,
-  threefold repetition, and the 40-move non-progress draw rule
+  promotion ending the turn, threefold repetition, and the 40-move
+  non-progress draw rule
 - Minimax AI with alpha-beta pruning, move ordering, and difficulty levels
 - Realtime multiplayer matchmaking and WebSocket notifications
 - SQLite-backed matches, sessions, ratings, and leaderboard
@@ -37,7 +38,7 @@ Report security concerns privately through [SECURITY.md](SECURITY.md).
 
 ## Requirements
 
-- Node.js 20.19 or newer
+- Node.js 22.23.1 or newer
 - npm 10 or newer
 
 ## Run Locally

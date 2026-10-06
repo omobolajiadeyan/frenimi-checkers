@@ -105,6 +105,59 @@ test("checkers matchmaking creates a ranked match and accepts moves", async () =
   assert.equal(surrenderBody.match.resultType, "win");
 });
 
+test("a multiplayer capture turn ends immediately when the mover is crowned", async () => {
+  const a = await createCheckersSession("Promotion QA A");
+  const b = await createCheckersSession("Promotion QA B");
+
+  await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(a.token),
+    body: JSON.stringify({ timeControl: "rapid120", captureRule: "forced" }),
+  });
+  const joinedB = await fetch(`${baseUrl}/api/checkers/matchmaking/join`, {
+    method: "POST",
+    headers: authHeaders(b.token),
+    body: JSON.stringify({ timeControl: "rapid120", captureRule: "forced" }),
+  });
+  const matched = await joinedB.json();
+  assert.equal(matched.state, "matched");
+
+  const matchId = matched.match.id;
+  const matchResponse = await fetch(`${baseUrl}/api/checkers/matches/${matchId}`, {
+    headers: authHeaders(a.token),
+  });
+  const matchBody = await matchResponse.json();
+  const redToken = matchBody.match.players.red.id === a.player.id ? a.token : b.token;
+
+  const board = Array(64).fill(null);
+  board[17] = "r";
+  board[10] = "b";
+  board[12] = "b";
+  initDatabase()
+    .prepare(
+      `UPDATE checkers_matches
+       SET board_state = ?, turn = 'r', forced_piece = NULL,
+           move_index = 0, move_log = '[]', since_progress = 0,
+           position_counts = '{}'
+       WHERE id = ?`
+    )
+    .run(JSON.stringify(board), matchId);
+
+  const moveResponse = await fetch(`${baseUrl}/api/checkers/matches/${matchId}/move`, {
+    method: "POST",
+    headers: authHeaders(redToken),
+    body: JSON.stringify({ from: 17, to: 3 }),
+  });
+  assert.equal(moveResponse.status, 200);
+  const moved = await moveResponse.json();
+
+  assert.equal(moved.match.turn, "b");
+  assert.equal(moved.match.forcedPiece, null);
+  assert.equal(moved.match.board[3], "R");
+  assert.equal(moved.match.board[10], null);
+  assert.equal(moved.match.board[12], "b");
+});
+
 test("checkers leaderboard returns players", async () => {
   const response = await fetch(`${baseUrl}/api/checkers/leaderboard?limit=5`);
   assert.equal(response.status, 200);
