@@ -141,8 +141,12 @@
     const variants = [];
     for (const move of captures) {
       const b2 = board.slice();
-      applyAtomicMoveOnBoard(b2, move);
-      variants.push(...captureSequences(b2, turn, move.to, [...prefix, move]));
+      const outcome = applyAtomicMoveOnBoard(b2, move);
+      if (outcome.promoted) {
+        variants.push({ sequence: [...prefix, move], boardAfter: b2 });
+      } else {
+        variants.push(...captureSequences(b2, turn, move.to, [...prefix, move]));
+      }
     }
     return variants;
   }
@@ -168,8 +172,12 @@
 
     for (const move of legal) {
       const b1 = board.slice();
-      applyAtomicMoveOnBoard(b1, move);
-      actions.push(...captureSequences(b1, turn, move.to, [move]));
+      const outcome = applyAtomicMoveOnBoard(b1, move);
+      if (outcome.promoted) {
+        actions.push({ sequence: [move], boardAfter: b1 });
+      } else {
+        actions.push(...captureSequences(b1, turn, move.to, [move]));
+      }
     }
     return actions;
   }
