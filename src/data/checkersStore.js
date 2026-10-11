@@ -837,7 +837,9 @@ function submitMove({ matchId, playerId, from, to }) {
     let nextTurn = row.turn;
     let nextForcedPiece = null;
     if (chosen.capture !== null && enforceCaptureRule) {
-      const continueCaps = getMovesForPiece(board, chosen.to, row.turn, true);
+      const continueCaps = outcome.promoted
+        ? []
+        : getMovesForPiece(board, chosen.to, row.turn, true);
       if (continueCaps.length > 0) {
         nextForcedPiece = chosen.to;
       } else {
